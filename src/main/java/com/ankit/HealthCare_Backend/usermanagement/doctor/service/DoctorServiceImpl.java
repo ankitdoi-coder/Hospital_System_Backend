@@ -21,6 +21,8 @@ import com.ankit.HealthCare_Backend.usermanagement.doctor.entity.Doctor;
 import com.ankit.HealthCare_Backend.usermanagement.doctor.repository.DoctorRepository;
 import com.ankit.HealthCare_Backend.usermanagement.patient.dto.PatientDTO;
 import com.ankit.HealthCare_Backend.usermanagement.patient.entity.Patient;
+import com.ankit.HealthCare_Backend.Exception.ResourceNotFoundException;
+import com.ankit.HealthCare_Backend.Exception.UnauthorizedException;
 import com.ankit.HealthCare_Backend.usermanagement.user.entity.User;
 import com.ankit.HealthCare_Backend.usermanagement.user.repository.UserRepository;
 
@@ -45,21 +47,19 @@ public class DoctorServiceImpl implements DoctorService {
     public List<AppointmentDTO> myUpcomingAppointments() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
-            throw new RuntimeException("Unauthenticated");
+            throw new UnauthorizedException("Unauthenticated");
         }
 
         String email = auth.getName();
 
         User user = userRepo.findByEmail(email);
         if (user == null) {
-            throw new RuntimeException("User not found with Email " + email);
+            throw new ResourceNotFoundException("User not found with Email " + email);
         }
 
         Doctor doctor = doctorRepo.findByUserId(user.getId());
         if (doctor == null) {
-            // The authenticated user exists but is not a patient (or patient profile
-            // missing)
-            throw new RuntimeException("No doctor profile found for user: " + email);
+            throw new ResourceNotFoundException("No doctor profile found for user: " + email);
         }
 
         Long doctorId = doctor.getId();
@@ -75,18 +75,18 @@ public class DoctorServiceImpl implements DoctorService {
     public List<PatientDTO> getMyPatients() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
-            throw new RuntimeException("Unauthenticated");
+            throw new UnauthorizedException("Unauthenticated");
         }
 
         String email = auth.getName();
         User user = userRepo.findByEmail(email);
         if (user == null) {
-            throw new RuntimeException("User not found with Email " + email);
+            throw new ResourceNotFoundException("User not found with Email " + email);
         }
 
         Doctor doctor = doctorRepo.findByUserId(user.getId());
         if (doctor == null) {
-            throw new RuntimeException("No doctor profile found for user: " + email);
+            throw new ResourceNotFoundException("No doctor profile found for user: " + email);
         }
 
         Long doctorId = doctor.getId();
@@ -105,7 +105,7 @@ public class DoctorServiceImpl implements DoctorService {
     @Override
     public PrescriptionDTO createPrescription(PrescriptionDTO prescriptionDTO) {
         Appointment appointment = appointmentRepo.findById(prescriptionDTO.getAppointmentId())
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Appointment not found with id: " + prescriptionDTO.getAppointmentId()));
 
         Prescription prescription = new Prescription();
@@ -156,7 +156,7 @@ public class DoctorServiceImpl implements DoctorService {
     @Override
     @Transactional
     public AppointmentDTO updateAppointmentStatus(Long id, UpdateStatusDTO status)  {
-        Appointment appointment=appointmentRepo.findById(id).orElseThrow(() -> new RuntimeException("Appointment not found with id: " + id));
+        Appointment appointment=appointmentRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + id));
         appointment.setStatus(status.getStatus());
         Appointment savedAppointment = appointmentRepo.save(appointment); 
         return  convertToAppointmentDto(savedAppointment);
@@ -166,18 +166,18 @@ public class DoctorServiceImpl implements DoctorService {
     public List<PrescriptionDTO> getMyPrescriptions() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
-            throw new RuntimeException("Unauthenticated");
+            throw new UnauthorizedException("Unauthenticated");
         }
 
         String email = auth.getName();
         User user = userRepo.findByEmail(email);
         if (user == null) {
-            throw new RuntimeException("User not found with Email " + email);
+            throw new ResourceNotFoundException("User not found with Email " + email);
         }
 
         Doctor doctor = doctorRepo.findByUserId(user.getId());
         if (doctor == null) {
-            throw new RuntimeException("No doctor profile found for user: " + email);
+            throw new ResourceNotFoundException("No doctor profile found for user: " + email);
         }
 
         Long doctorId = doctor.getId();

@@ -46,23 +46,11 @@ public class AuthenticationController {
     @Autowired
     AuthService authService;
 
-    @Autowired
-    private UserRepository userRepository;
-
-
 
     @PostMapping("/register")
     public ResponseEntity<UserResponseDTO> register(@RequestBody RegisterRequestDTO registerRequest) {
-        if(userRepository.existsByEmail(registerRequest.getEmail())){
-            throw new RuntimeException("User with this email already exists");
-        }
         UserResponseDTO response = authService.registerUser(registerRequest);
-        if(response!=null){
-            return new ResponseEntity<>(response,HttpStatus.CREATED);
-        }else{
-            throw new RuntimeException("Internal Server Error");
-        }
-       
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @PostMapping("/login")
@@ -110,22 +98,14 @@ public class AuthenticationController {
 
     @PostMapping("/forgot-password")
     public ResponseEntity<MessageResponseDTO> forgotPassword(@RequestBody ForgotPasswordRequestDTO request) {
-        try {
-            String message = authService.forgotPassword(request.getEmail());
-            return ResponseEntity.ok(new MessageResponseDTO(message));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new MessageResponseDTO(e.getMessage()));
-        }
+        String message = authService.forgotPassword(request.getEmail());
+        return ResponseEntity.ok(new MessageResponseDTO(message));
     }
 
     @PostMapping("/reset-password")
     public ResponseEntity<MessageResponseDTO> resetPassword(@RequestBody ResetPasswordRequestDTO request) {
-        try {
-            String message = authService.resetPassword(request.getToken(), request.getNewPassword());
-            return ResponseEntity.ok(new MessageResponseDTO(message));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new MessageResponseDTO(e.getMessage()));
-        }
+        String message = authService.resetPassword(request.getToken(), request.getNewPassword());
+        return ResponseEntity.ok(new MessageResponseDTO(message));
     }
 
     @GetMapping("/oauth2/callback")

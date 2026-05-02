@@ -11,6 +11,7 @@ import com.ankit.HealthCare_Backend.billing.dto.BillingDTO;
 import com.ankit.HealthCare_Backend.billing.entity.Billing;
 import com.ankit.HealthCare_Backend.billing.repository.BillingRepository;
 import com.ankit.HealthCare_Backend.core.enums.BillingStatus;
+import com.ankit.HealthCare_Backend.Exception.ResourceNotFoundException;
 import com.ankit.HealthCare_Backend.usermanagement.doctor.dto.DoctorDTO;
 import com.ankit.HealthCare_Backend.usermanagement.doctor.entity.Doctor;
 import com.ankit.HealthCare_Backend.usermanagement.doctor.repository.DoctorRepository;
@@ -46,9 +47,8 @@ public class AdminServiceImpl implements AdminService {
     public DoctorDTO approveDoctor(Long id) {
         // Find the doctor, or throw an exception if not found
         Doctor doctor = doctorRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Doctor not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Doctor not found with id: " + id));
 
-        // Update the doctor's status
         doctor.setApproved(true);
 
         // Save the updated doctor (optional if inside a @Transactional method, but good
@@ -95,7 +95,7 @@ public class AdminServiceImpl implements AdminService {
     @Transactional
     public DoctorDTO rejectDoctor(Long id) {
         Doctor doctor = doctorRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Doctor not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Doctor not found with id: " + id));
 
         doctor.setApproved(false);
         Doctor savedDoctor = doctorRepo.save(doctor);
@@ -117,7 +117,7 @@ public class AdminServiceImpl implements AdminService {
         String cleanStatus = status.replace("\"", "").trim();
         BillingStatus billingStatus = BillingStatus.valueOf(cleanStatus);
         Billing billing = billingRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Billing not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Billing not found with id: " + id));
         
         billing.setBilling_status(billingStatus);
         Billing savedBilling = billingRepo.save(billing);

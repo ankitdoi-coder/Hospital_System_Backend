@@ -4,6 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.ankit.HealthCare_Backend.Exception.DuplicateResourceException;
+import com.ankit.HealthCare_Backend.Exception.ResourceNotFoundException;
 import com.ankit.HealthCare_Backend.usermanagement.doctor.entity.Doctor;
 import com.ankit.HealthCare_Backend.usermanagement.doctor.repository.DoctorRepository;
 import com.ankit.HealthCare_Backend.core.entity.Role;
@@ -40,11 +42,10 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public UserResponseDTO registerUser(RegisterRequestDTO registerRequest) {
         Role userRole = roleRepo.findById(registerRequest.getRoleId())
-                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + registerRequest.getRoleId()));
         
-        // Check if the user already exists
         if (userRepo.existsByEmail(registerRequest.getEmail())) {
-            throw new RuntimeException("Error: Email is already in use!");
+            throw new DuplicateResourceException("Email is already in use: " + registerRequest.getEmail());
         }
         // Part 1: Create the User record
         User newUser = new User();
@@ -102,7 +103,7 @@ public class AuthServiceImpl implements AuthService {
     public String forgotPassword(String email) {
         User user = userRepo.findByEmail(email);
         if (user == null) {
-            throw new RuntimeException("User not found with email: " + email);
+            throw new ResourceNotFoundException("User not found with email: " + email);
         }
 
         // Check if user is a patient or doctor (not admin)
@@ -128,16 +129,14 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public String resetPassword(String token, String newPassword) {
         PasswordResetToken resetToken = passwordResetTokenRepo.findByToken(token)
-                .orElseThrow(() -> new RuntimeException("Invalid or expired reset token"));
+                .orElseThrow(() -> new ResourceNotFoundException("Invalid or expired reset token"));
 
-        // Check if token is expired
         if (resetToken.getExpiryDate().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Reset token has expired");
+            throw new IllegalArgumentException("Reset token has expired");
         }
 
-        // Check if token is already used
         if (resetToken.isUsed()) {
-            throw new RuntimeException("Reset token has already been used");
+            throw new IllegalArgumentException("Reset token has already been used");
         }
 
         // Update user password

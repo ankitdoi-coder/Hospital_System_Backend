@@ -27,6 +27,8 @@ import com.ankit.HealthCare_Backend.usermanagement.doctor.repository.DoctorRepos
 import com.ankit.HealthCare_Backend.usermanagement.patient.dto.PatientDTO;
 import com.ankit.HealthCare_Backend.usermanagement.patient.entity.Patient;
 import com.ankit.HealthCare_Backend.usermanagement.patient.repository.PatientRepository;
+import com.ankit.HealthCare_Backend.Exception.ResourceNotFoundException;
+import com.ankit.HealthCare_Backend.Exception.UnauthorizedException;
 import com.ankit.HealthCare_Backend.usermanagement.user.entity.User;
 import com.ankit.HealthCare_Backend.usermanagement.user.repository.UserRepository;
 
@@ -117,17 +119,16 @@ public class PatientServiceImpl implements PatientService {
         // 1. Find patient by user  email
         User user = userRepo.findByEmail(patientEmail);
         if (user == null) {
-            throw new RuntimeException("User not found: " + patientEmail);
+            throw new ResourceNotFoundException("User not found: " + patientEmail);
         }
         
-        //find the patient using userId
         Patient patient = patientRepo.findByUserId(user.getId());
         if (patient == null) {
-            throw new RuntimeException("No patient profile found for user: " + patientEmail);
+            throw new ResourceNotFoundException("No patient profile found for user: " + patientEmail);
         }
 
         Doctor doctor = doctorRepo.findById(appointmentDTO.getDoctorId())
-                .orElseThrow(() -> new RuntimeException("Doctor not found with id: " + appointmentDTO.getDoctorId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Doctor not found with id: " + appointmentDTO.getDoctorId()));
 
         // 2. Create the appointment entity
         Appointment newAppointment = new Appointment();
@@ -151,24 +152,19 @@ public class PatientServiceImpl implements PatientService {
     public List<AppointmentDTO> getMyAppointments() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
-            throw new RuntimeException("Unauthenticated");
+            throw new UnauthorizedException("Unauthenticated");
         }
 
-        String email = auth.getName(); // your CustomUserDetailsService sets the username = email
+        String email = auth.getName();
 
         User user = userRepo.findByEmail(email);
         if (user == null) {
-            throw new RuntimeException("User not found: " + email);
+            throw new ResourceNotFoundException("User not found: " + email);
         }
 
-        // The 'User' table and 'Patient' table are separate. We need the Patient record
-        // that links to this User (patient.user_id -> users.id) and then query
-        // appointments
         Patient patient = patientRepo.findByUserId(user.getId());
         if (patient == null) {
-            // The authenticated user exists but is not a patient (or patient profile
-            // missing)
-            throw new RuntimeException("No patient profile found for user: " + email);
+            throw new ResourceNotFoundException("No patient profile found for user: " + email);
         }
 
         Long patientId = patient.getId();
@@ -185,18 +181,18 @@ public class PatientServiceImpl implements PatientService {
     public List<PrescriptionDTO> getMyPrescriptions() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
-            throw new RuntimeException("Unauthenticated");
+            throw new UnauthorizedException("Unauthenticated");
         }
 
         String email = auth.getName();
         User user = userRepo.findByEmail(email);
         if (user == null) {
-            throw new RuntimeException("User not found: " + email);
+            throw new ResourceNotFoundException("User not found: " + email);
         }
 
         Patient patient = patientRepo.findByUserId(user.getId());
         if (patient == null) {
-            throw new RuntimeException("No patient profile found for user: " + email);
+            throw new ResourceNotFoundException("No patient profile found for user: " + email);
         }
 
         List<Appointment> appointments = appointmentRepo.findByPatientId(patient.getId());
@@ -223,18 +219,18 @@ public class PatientServiceImpl implements PatientService {
     public PatientDTO getMyProfile() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
-            throw new RuntimeException("Unauthenticated");
+            throw new UnauthorizedException("Unauthenticated");
         }
 
         String email = auth.getName();
         User user = userRepo.findByEmail(email);
         if (user == null) {
-            throw new RuntimeException("User not found: " + email);
+            throw new ResourceNotFoundException("User not found: " + email);
         }
 
         Patient patient = patientRepo.findByUserId(user.getId());
         if (patient == null) {
-            throw new RuntimeException("No patient profile found for user: " + email);
+            throw new ResourceNotFoundException("No patient profile found for user: " + email);
         }
 
         return convertToPatientDto(patient);
@@ -248,7 +244,7 @@ public class PatientServiceImpl implements PatientService {
     @Transactional
     public void makePayment(Long appointmentId) {
         Appointment appointment = appointmentRepo.findById(appointmentId)
-                .orElseThrow(() -> new RuntimeException("Appointment not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + appointmentId));
         
         Billing billing = billingRepo.findAll().stream()
                 .filter(b -> b.getAppointment_id().getId().equals(appointmentId))
@@ -270,7 +266,7 @@ public class PatientServiceImpl implements PatientService {
     @Transactional
     public void cancelAppointment(Long appointmentId) {
         Appointment appointment = appointmentRepo.findById(appointmentId)
-                .orElseThrow(() -> new RuntimeException("Appointment not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + appointmentId));
         
         // Delete the appointment
         appointmentRepo.delete(appointment);
