@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+
 import java.io.IOException;
 
 import lombok.RequiredArgsConstructor;
@@ -48,7 +50,7 @@ public class AuthenticationController {
 
 
     @PostMapping("/register")
-    public ResponseEntity<UserResponseDTO> register(@RequestBody RegisterRequestDTO registerRequest) {
+    public ResponseEntity<UserResponseDTO> register(@Valid @RequestBody RegisterRequestDTO registerRequest) {
         UserResponseDTO response = authService.registerUser(registerRequest);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }

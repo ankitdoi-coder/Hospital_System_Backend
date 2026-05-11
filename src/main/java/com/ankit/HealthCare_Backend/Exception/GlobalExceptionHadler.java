@@ -2,6 +2,7 @@ package com.ankit.HealthCare_Backend.Exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -35,6 +36,15 @@ public class GlobalExceptionHadler {
     public ResponseEntity<Map<String, Object>> handleGeneral(Exception ex) {
         return buildResponse("An unexpected error occurred: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+
+
+    //validator exception handler
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleValidatorError(MethodArgumentNotValidException ex){
+        return buildResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
 
     private ResponseEntity<Map<String, Object>> buildResponse(String message, HttpStatus status) {
         return new ResponseEntity<>(
