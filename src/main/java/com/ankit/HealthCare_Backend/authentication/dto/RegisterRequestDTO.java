@@ -29,7 +29,7 @@ public class RegisterRequestDTO {
     private String lastName;
     private String specialty;
 
-    @NotNull(message = "Contact number cannot be null")
+    
     @Digits(integer=10,fraction=0,message="Phone must be exactly 10 Digits")
     private Long contactNumber;
     private LocalDate dob;

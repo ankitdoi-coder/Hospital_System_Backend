@@ -19,6 +19,7 @@ import com.ankit.HealthCare_Backend.prescription.dto.PrescriptionDTO;
 import com.ankit.HealthCare_Backend.usermanagement.doctor.dto.DoctorDTO;
 import com.ankit.HealthCare_Backend.usermanagement.patient.dto.PatientDTO;
 import com.ankit.HealthCare_Backend.usermanagement.patient.service.PatientService;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/patient")
@@ -36,7 +37,7 @@ public class PatientController {
     // Book a new Appointment
     @PostMapping("/appointments/new")
     public ResponseEntity<AppointmentDTO> newAppointment(
-            @RequestBody AppointmentDTO appointmentDTO,
+           @Valid @RequestBody AppointmentDTO appointmentDTO,
             Authentication authentication) {
 
         // Get patient email from JWT

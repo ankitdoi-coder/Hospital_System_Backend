@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ankit.HealthCare_Backend.appointment.dto.AppointmentDTO;
 import com.ankit.HealthCare_Backend.appointment.dto.UpdateStatusDTO;
 import com.ankit.HealthCare_Backend.prescription.dto.PrescriptionDTO;
+import com.ankit.HealthCare_Backend.usermanagement.doctor.dto.DoctorDTO;
 import com.ankit.HealthCare_Backend.usermanagement.doctor.service.DoctorService;
 import com.ankit.HealthCare_Backend.usermanagement.patient.dto.PatientDTO;
 
@@ -25,6 +26,12 @@ import com.ankit.HealthCare_Backend.usermanagement.patient.dto.PatientDTO;
 public class DoctorController {
     @Autowired
     private DoctorService doctorService;
+
+    // Get doctor's own profile
+    @GetMapping("/profile")
+    public ResponseEntity<DoctorDTO> getMyProfile() {
+        return ResponseEntity.ok(doctorService.getMyProfile());
+    }
 
     // get the upcoming all appoinments Pending,Schedulled,Completed etc
     @GetMapping("/appointments/my")

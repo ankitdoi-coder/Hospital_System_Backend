@@ -15,6 +15,7 @@ import com.ankit.HealthCare_Backend.appointment.dto.UpdateStatusDTO;
 import com.ankit.HealthCare_Backend.appointment.entity.Appointment;
 import com.ankit.HealthCare_Backend.appointment.repository.AppointmentRepository;
 import com.ankit.HealthCare_Backend.prescription.dto.PrescriptionDTO;
+import com.ankit.HealthCare_Backend.usermanagement.doctor.dto.DoctorDTO;
 import com.ankit.HealthCare_Backend.prescription.entity.Prescription;
 import com.ankit.HealthCare_Backend.prescription.repository.PrescriptionRepository;
 import com.ankit.HealthCare_Backend.usermanagement.doctor.entity.Doctor;
@@ -41,6 +42,32 @@ public class DoctorServiceImpl implements DoctorService {
     private PrescriptionRepository prescriptionRepo;
 
 
+
+    //Get upcoming appoinments of doctor
+    @Override
+    public DoctorDTO getMyProfile() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
+            throw new UnauthorizedException("Unauthenticated");
+        }
+
+        String email = auth.getName();
+        User user = userRepo.findByEmail(email);
+        if (user == null) throw new ResourceNotFoundException("User not found: " + email);
+
+        Doctor doctor = doctorRepo.findByUserId(user.getId());
+        if (doctor == null) throw new ResourceNotFoundException("Doctor profile not found for: " + email);
+
+        DoctorDTO dto = new DoctorDTO();
+        dto.setId(doctor.getId());
+        dto.setFirstName(doctor.getFirstName());
+        dto.setLastName(doctor.getLastName());
+        dto.setSpecialty(doctor.getSpecialty());
+        dto.setExperience(doctor.getExperience());
+        dto.setApproved(doctor.isApproved());
+        dto.setEmail(email);
+        return dto;
+    }
 
     //Get upcoming appoinments of doctor
     @Override

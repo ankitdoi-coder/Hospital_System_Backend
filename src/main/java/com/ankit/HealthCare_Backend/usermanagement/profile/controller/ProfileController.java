@@ -23,7 +23,7 @@ public class ProfileController {
     @PreAuthorize("hasRole('PATIENT')")
     public ResponseEntity<Map<String, Object>> uploadPatientProfilePicture(
             @RequestParam("profilePicture") MultipartFile file,
-            Principal principal) {
+            Principal principal) throws java.io.IOException {
         String imageUrl = profileService.uploadProfilePicture(file, principal.getName(), "PATIENT");
         return ResponseEntity.ok(Map.of("success", true, "message", "Profile picture uploaded successfully", "imageUrl", imageUrl));
     }
@@ -37,7 +37,7 @@ public class ProfileController {
 
     @DeleteMapping("/patient/profile/picture")
     @PreAuthorize("hasRole('PATIENT')")
-    public ResponseEntity<Map<String, Object>> deletePatientProfilePicture(Principal principal) {
+    public ResponseEntity<Map<String, Object>> deletePatientProfilePicture(Principal principal) throws java.io.IOException {
         profileService.deleteProfilePicture(principal.getName(), "PATIENT");
         return ResponseEntity.ok(Map.of("success", true, "message", "Profile picture deleted successfully"));
     }
@@ -46,7 +46,7 @@ public class ProfileController {
     @PreAuthorize("hasRole('DOCTOR')")
     public ResponseEntity<Map<String, Object>> uploadDoctorProfilePicture(
             @RequestParam("profilePicture") MultipartFile file,
-            Principal principal) {
+            Principal principal) throws java.io.IOException {
         String imageUrl = profileService.uploadProfilePicture(file, principal.getName(), "DOCTOR");
         return ResponseEntity.ok(Map.of("success", true, "message", "Profile picture uploaded successfully", "imageUrl", imageUrl));
     }
@@ -60,7 +60,7 @@ public class ProfileController {
 
     @DeleteMapping("/doctor/profile/picture")
     @PreAuthorize("hasRole('DOCTOR')")
-    public ResponseEntity<Map<String, Object>> deleteDoctorProfilePicture(Principal principal) {
+    public ResponseEntity<Map<String, Object>> deleteDoctorProfilePicture(Principal principal) throws java.io.IOException {
         profileService.deleteProfilePicture(principal.getName(), "DOCTOR");
         return ResponseEntity.ok(Map.of("success", true, "message", "Profile picture deleted successfully"));
     }
