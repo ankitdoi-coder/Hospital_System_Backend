@@ -26,8 +26,11 @@ public class NotificationEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable=false)
+    private Long senderId;
+
     @Column(nullable = false)
-    private Long userId; //reciver userId
+    private Long receiverId; //reciver userId
 
     @Column(nullable = false)
     private String message;

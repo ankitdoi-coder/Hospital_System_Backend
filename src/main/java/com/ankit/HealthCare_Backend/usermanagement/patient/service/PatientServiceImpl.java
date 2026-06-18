@@ -31,6 +31,8 @@ import com.ankit.HealthCare_Backend.Exception.ResourceNotFoundException;
 import com.ankit.HealthCare_Backend.Exception.UnauthorizedException;
 import com.ankit.HealthCare_Backend.usermanagement.user.entity.User;
 import com.ankit.HealthCare_Backend.usermanagement.user.repository.UserRepository;
+import com.ankit.HealthCare_Backend.notification.entity.NotificationEntity;
+
 
 @Service
 public class PatientServiceImpl implements PatientService {
@@ -135,6 +137,16 @@ public class PatientServiceImpl implements PatientService {
         newAppointment.setPatient(patient);
         newAppointment.setDoctor(doctor);
         newAppointment.setAppointmentDate(appointmentDTO.getAppointmentDate());
+
+        //new Notification Entity to create new Notification
+        NotificationEntity notification=new NotificationEntity();
+        notification.setMessage("New appointment with "+ patient.getFirstName() + " "+patient.getLastName());
+        notification.setSenderId(patient.getId());
+        notification.setReceiverId(doctor.getId());
+        notification.setRead(false);
+        notification.setType(NotificationType.APPOINTMENT);
+
+        newAppointment.setNotification(notification);
         newAppointment.setStatus(AppointmentStatusEnum.PENDING);
 
         // 3. Save the new appointment

@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import com.ankit.HealthCare_Backend.usermanagement.doctor.entity.Doctor;
 import com.ankit.HealthCare_Backend.usermanagement.patient.entity.Patient;
 import com.ankit.HealthCare_Backend.core.enums.AppointmentStatusEnum;
+import com.ankit.HealthCare_Backend.Notification.NotificationEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -41,6 +42,9 @@ public class Appointment {
 
     @Column(name = "appointment_date", nullable = false)
     private LocalDate appointmentDate;
+
+    @Column(name="notification")
+    private NotificationEntity notification;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
