@@ -31,7 +31,8 @@ import com.ankit.HealthCare_Backend.Exception.ResourceNotFoundException;
 import com.ankit.HealthCare_Backend.Exception.UnauthorizedException;
 import com.ankit.HealthCare_Backend.usermanagement.user.entity.User;
 import com.ankit.HealthCare_Backend.usermanagement.user.repository.UserRepository;
-import com.ankit.HealthCare_Backend.notification.entity.NotificationEntity;
+import com.ankit.HealthCare_Backend.Notification.NotificationService;
+import com.ankit.HealthCare_Backend.Notification.NotificationType;
 
 
 @Service
@@ -54,6 +55,8 @@ public class PatientServiceImpl implements PatientService {
 
     @Autowired
     private BillingRepository billingRepo;
+    @Autowired
+    private NotificationService notiService;
 
 
 
@@ -137,22 +140,18 @@ public class PatientServiceImpl implements PatientService {
         newAppointment.setPatient(patient);
         newAppointment.setDoctor(doctor);
         newAppointment.setAppointmentDate(appointmentDTO.getAppointmentDate());
-
-        //new Notification Entity to create new Notification
-        NotificationEntity notification=new NotificationEntity();
-        notification.setMessage("New appointment with "+ patient.getFirstName() + " "+patient.getLastName());
-        notification.setSenderId(patient.getId());
-        notification.setReceiverId(doctor.getId());
-        notification.setRead(false);
-        notification.setType(NotificationType.APPOINTMENT);
-
-        newAppointment.setNotification(notification);
         newAppointment.setStatus(AppointmentStatusEnum.PENDING);
 
         // 3. Save the new appointment
         Appointment savedAppointment = appointmentRepo.save(newAppointment);
 
-        // 4. Convert back to DTO
+        // 4.create new Notification for patient
+        notiService.createNotification(user.getId(),"Your Appointment Booked with Doctor :"+doctor.getFirstName()+doctor.getLastName(),doctor.getUser().getId(),NotificationType.APPOINTMENT);
+        notiService.createNotification(doctor.getUser().getId(), "You have new Appointment from Patient :"+patient.getFirstName()+patient.getLastName(), user.getId(),NotificationType.APPOINTMENT);
+        
+        
+
+        // 5. Convert back to DTO
         return convertToAppointmentDto(savedAppointment);
     }
 

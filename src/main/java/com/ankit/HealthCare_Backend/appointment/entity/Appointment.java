@@ -43,8 +43,7 @@ public class Appointment {
     @Column(name = "appointment_date", nullable = false)
     private LocalDate appointmentDate;
 
-    @Column(name="notification")
-    private NotificationEntity notification;
+    
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)

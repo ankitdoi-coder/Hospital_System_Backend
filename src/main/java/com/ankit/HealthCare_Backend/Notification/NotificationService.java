@@ -47,22 +47,24 @@ public class NotificationService{
         return notificationRepo.countByReceiverIdAndIsReadFalse(getCurrentUserId());
     }
 
-    //mark unread Read
-    public void markAsRead(Long notificationId){
+    //mark as Read
+    public String markAsRead(Long notificationId){
         
         NotificationEntity notification=notificationRepo.findById(notificationId)
         .orElseThrow(()->new ResourceNotFoundException("Notification Not Found with id: "+notificationId));
         notification.setRead(true);
         notificationRepo.save(notification);
+        return "Notification Read";
         
     }
 
     //mark All as Read
-    public void markAllAsRead(){
+    public String markAllAsRead(){
         Long receiverId=getCurrentUserId();
         List<NotificationEntity> notifications=notificationRepo.findByReceiverIdOrderByCreatedAtDesc(receiverId);
         notifications.forEach(n -> n.setRead(true));
         notificationRepo.saveAll(notifications);
+        return "All read Success";
     }
 
     //helper to Get the Current User id 

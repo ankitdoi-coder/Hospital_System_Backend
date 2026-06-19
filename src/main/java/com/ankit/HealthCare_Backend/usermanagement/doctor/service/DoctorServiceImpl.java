@@ -26,7 +26,8 @@ import com.ankit.HealthCare_Backend.Exception.ResourceNotFoundException;
 import com.ankit.HealthCare_Backend.Exception.UnauthorizedException;
 import com.ankit.HealthCare_Backend.usermanagement.user.entity.User;
 import com.ankit.HealthCare_Backend.usermanagement.user.repository.UserRepository;
-
+import com.ankit.HealthCare_Backend.Notification.NotificationService;
+import com.ankit.HealthCare_Backend.Notification.NotificationType;
 
 
 @Service
@@ -41,6 +42,8 @@ public class DoctorServiceImpl implements DoctorService {
     @Autowired
     private PrescriptionRepository prescriptionRepo;
 
+    @Autowired
+    private NotificationService notiService;
 
 
     //Get upcoming appoinments of doctor
@@ -180,14 +183,25 @@ public class DoctorServiceImpl implements DoctorService {
         return dto;
     }
 
+
+    //UPDATE THE appointment status
     @Override
     @Transactional
     public AppointmentDTO updateAppointmentStatus(Long id, UpdateStatusDTO status)  {
         Appointment appointment=appointmentRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + id));
         appointment.setStatus(status.getStatus());
         Appointment savedAppointment = appointmentRepo.save(appointment); 
+
+        //create a notification 
+        notiService.createNotification(
+        appointment.getPatient().getUser().getId(),
+        "Your appointment status has been updated to: " + status.getStatus() + " by Dr. " + appointment.getDoctor().getFirstName() + " " + appointment.getDoctor().getLastName(),
+        appointment.getDoctor().getUser().getId(),
+        NotificationType.APPOINTMENT);
         return  convertToAppointmentDto(savedAppointment);
     }
+
+
 
     @Override
     public List<PrescriptionDTO> getMyPrescriptions() {
