@@ -9,6 +9,7 @@ A production-ready, secure, and scalable RESTful API for a **Smart Healthcare Ap
 | Feature | Details |
 |---|---|
 | **JWT Auth + Role-Based Access** | Stateless authentication with role-scoped endpoints (ADMIN / DOCTOR / PATIENT) |
+| **Email OTP Verification** | 6-digit OTP sent via email before registration; 10-minute expiry, single-use, auto-cleared on resend |
 | **Google OAuth2 Social Login** | Patients and doctors can sign in with Google via Spring OAuth2 client |
 | **Global Exception Handler** | `@RestControllerAdvice` catches all exceptions — validation, auth, not-found, duplicates — and returns consistent JSON error responses with timestamp |
 | **Bean Validation** | `@Valid` + Jakarta Validation annotations (`@NotNull`, `@NotBlank`, `@Email`, `@Digits`) on all request DTOs |
@@ -58,6 +59,7 @@ com.ankit.HealthCare_Backend/
 | Framework | Spring Boot | 3.5.7 |
 | Security | Spring Security + JWT (jjwt) | 6.5.7 / 0.11.5 |
 | Social Login | Spring OAuth2 Client (Google) | 6.5.7 |
+| Email | Spring Boot Starter Mail (JavaMailSender) | 3.5.7 |
 | ORM | Spring Data JPA + Hibernate | 3.5.7 |
 | Database | MySQL (mysql-connector-j) | 8.3.0 |
 | Validation | Spring Boot Starter Validation (Jakarta) | 3.5.7 |
@@ -79,7 +81,8 @@ Request → JwtFilter → Validate Token → Set SecurityContext → @PreAuthori
 3. **Google OAuth2** — `/oauth2/**` flow handled by `OAuth2LoginSuccessHandler`, redirects with token
 4. **JWT Filter** — `JwtFilter` intercepts every request, validates signature & expiry
 5. **Role Guards** — `/api/patient/**` → `ROLE_PATIENT`, `/api/doctor/**` → `ROLE_DOCTOR`, `/api/admin/**` → `ROLE_ADMIN`
-6. **Password Reset** — Secure time-limited token flow via `POST /api/auth/forgot-password` → `POST /api/auth/reset-password`
+6. **Email OTP** — `POST /api/auth/send-otp` sends a 6-digit OTP; `POST /api/auth/verify-otp` validates it before allowing registration
+7. **Password Reset** — Secure time-limited token flow via `POST /api/auth/forgot-password` → `POST /api/auth/reset-password`
 7. **BCrypt** — All passwords hashed with `BCryptPasswordEncoder`
 
 ---
@@ -132,6 +135,8 @@ Validation failures are caught by the Global Exception Handler and returned as s
 ### 🔐 Auth — `/api/auth`
 | Method | Endpoint | Description | Auth |
 |---|---|---|---|
+| POST | `/send-otp` | Send 6-digit OTP to email for verification | Public |
+| POST | `/verify-otp` | Verify the OTP before registration | Public |
 | POST | `/register` | Register a new user (Patient/Doctor) | Public |
 | POST | `/login` | Authenticate and receive JWT | Public |
 | POST | `/forgot-password` | Request a password reset token | Public |
