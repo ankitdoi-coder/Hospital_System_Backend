@@ -22,6 +22,7 @@ import java.io.IOException;
 
 import lombok.RequiredArgsConstructor;
 
+import com.ankit.HealthCare_Backend.authentication.service.EmailOtpService;
 import com.ankit.HealthCare_Backend.shared.dto.MessageResponseDTO;
 import com.ankit.HealthCare_Backend.usermanagement.doctor.entity.Doctor;
 import com.ankit.HealthCare_Backend.usermanagement.doctor.repository.DoctorRepository;
@@ -48,6 +49,24 @@ public class AuthenticationController {
     @Autowired
     AuthService authService;
 
+    @Autowired
+    EmailOtpService emailOtpService;
+
+
+    @PostMapping("/send-otp")
+    public ResponseEntity<MessageResponseDTO> sendOtp(@Valid @RequestBody OtpRequestDTO request) {
+        emailOtpService.sendOtp(request.getEmail());
+        return ResponseEntity.ok(new MessageResponseDTO("OTP sent to " + request.getEmail()));
+    }
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<MessageResponseDTO> verifyOtp(@Valid @RequestBody OtpVerifyDTO request) {
+        boolean verified = emailOtpService.verifyOtp(request.getEmail(), request.getOtp());
+        if (!verified) {
+            return ResponseEntity.badRequest().body(new MessageResponseDTO("Invalid or expired OTP"));
+        }
+        return ResponseEntity.ok(new MessageResponseDTO("Email verified. You can now register."));
+    }
 
     @PostMapping("/register")
     public ResponseEntity<UserResponseDTO> register(@Valid @RequestBody RegisterRequestDTO registerRequest) {

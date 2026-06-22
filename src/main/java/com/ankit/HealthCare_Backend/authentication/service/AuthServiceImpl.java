@@ -19,6 +19,7 @@ import com.ankit.HealthCare_Backend.usermanagement.user.repository.UserRepositor
 import com.ankit.HealthCare_Backend.authentication.dto.UserResponseDTO;
 import com.ankit.HealthCare_Backend.authentication.dto.RegisterRequestDTO;
 
+import com.ankit.HealthCare_Backend.authentication.service.EmailOtpService;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -38,9 +39,16 @@ public class AuthServiceImpl implements AuthService {
     @Autowired
     private PasswordResetTokenRepository passwordResetTokenRepo;
 
+    @Autowired
+    private EmailOtpService emailOtpService;
+
     @Override
     @Transactional
     public UserResponseDTO registerUser(RegisterRequestDTO registerRequest) {
+        if (!emailOtpService.isEmailVerified(registerRequest.getEmail())) {
+            throw new IllegalArgumentException("Email not verified. Please verify your email with OTP first.");
+        }
+
         Role userRole = roleRepo.findById(registerRequest.getRoleId())
                 .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + registerRequest.getRoleId()));
         
