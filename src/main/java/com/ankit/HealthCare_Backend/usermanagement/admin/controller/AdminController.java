@@ -2,7 +2,6 @@ package com.ankit.HealthCare_Backend.usermanagement.admin.controller;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +15,7 @@ import com.ankit.HealthCare_Backend.usermanagement.patient.dto.PatientDTO;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,10 +23,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 @RestController
 @RequestMapping("/api/admin")
 @Validated
+@RequiredArgsConstructor
 public class AdminController {
-
-    @Autowired
-    private AdminService adminService;
+    private final AdminService adminService;
 
     // doctors list
     @GetMapping("/doctors")

@@ -2,7 +2,6 @@ package com.ankit.HealthCare_Backend.usermanagement.patient.controller;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -21,15 +20,16 @@ import com.ankit.HealthCare_Backend.usermanagement.patient.dto.PatientDTO;
 import com.ankit.HealthCare_Backend.usermanagement.patient.service.PatientService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
+import lombok.RequiredArgsConstructor;
 
 import org.springframework.validation.annotation.Validated;
 
 @RestController
 @RequestMapping("/api/patient")
 @Validated
+@RequiredArgsConstructor
 public class PatientController {
-    @Autowired
-    private PatientService patientService;
+    private final PatientService patientService;
 
     // gets the List of the doctors
     @GetMapping("/doctors")

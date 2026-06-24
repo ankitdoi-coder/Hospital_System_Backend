@@ -2,7 +2,6 @@ package com.ankit.HealthCare_Backend.usermanagement.doctor.controller;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
+import lombok.RequiredArgsConstructor;
 
 import com.ankit.HealthCare_Backend.appointment.dto.AppointmentDTO;
 import com.ankit.HealthCare_Backend.appointment.dto.UpdateStatusDTO;
@@ -28,9 +28,9 @@ import com.ankit.HealthCare_Backend.usermanagement.patient.dto.PatientDTO;
 @RestController
 @RequestMapping("/api/doctor")
 @Validated
+@RequiredArgsConstructor
 public class DoctorController {
-    @Autowired
-    private DoctorService doctorService;
+    private final DoctorService doctorService;
 
     // Get doctor's own profile
     @GetMapping("/profile")

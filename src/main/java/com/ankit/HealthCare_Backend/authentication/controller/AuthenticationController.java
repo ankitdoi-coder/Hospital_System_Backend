@@ -1,6 +1,5 @@
 package com.ankit.HealthCare_Backend.authentication.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -45,12 +44,8 @@ public class AuthenticationController {
     private final UserDetailsService customUserDetailsService;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
-    
-    @Autowired
-    AuthService authService;
-
-    @Autowired
-    EmailOtpService emailOtpService;
+    private final AuthService authService;
+    private final EmailOtpService emailOtpService;
 
 
     @PostMapping("/send-otp")
