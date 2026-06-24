@@ -20,6 +20,7 @@ public class AppProperties {
     @Data
     public static class Jwt {
         private String secret;
+        private long expirationMs = 86400000; // default 24h if not set in properties
     }
 
     //for admin

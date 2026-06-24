@@ -37,6 +37,9 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
     @Value("${app.oauth2.redirectUri}")
     private String redirectUri;
 
+    @Value("${app.oauth2.callbackUri}")
+    private String callbackUri;
+
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
         OAuth2User oauth2User = (OAuth2User) authentication.getPrincipal();
@@ -59,7 +62,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
 
         String jwt = jwtService.generateToken(userDetails);
 
-        String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:8080/api/auth/oauth2/callback")
+        String targetUrl = UriComponentsBuilder.fromUriString(callbackUri)
                 .queryParam("token", jwt)
                 .build().toUriString();
 

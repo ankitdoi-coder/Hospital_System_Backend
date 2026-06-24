@@ -21,9 +21,11 @@ public class JwtService {
 
     // The SECRET_KEY is injected from our AppProperties
     private final String SECRET_KEY;
+    private final long EXPIRATION_MS;
 
     public JwtService(AppProperties appProperties) {
         this.SECRET_KEY = appProperties.getJwt().getSecret();
+        this.EXPIRATION_MS = appProperties.getJwt().getExpirationMs();
     }
 
     // find the username from the token
@@ -39,7 +41,7 @@ public class JwtService {
                         .map(grantedAuthority -> grantedAuthority.getAuthority())
                         .collect(Collectors.toList()))
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24)) // 24 hours
+                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_MS))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }

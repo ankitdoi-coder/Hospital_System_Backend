@@ -27,9 +27,9 @@ public class EmailOtp {
     @Column(nullable = false)
     private boolean verified = false;
 
-    public EmailOtp(String email, String otp) {
+    public EmailOtp(String email, String otp, int expiryMinutes) {
         this.email = email;
         this.otp = otp;
-        this.expiryTime = LocalDateTime.now().plusMinutes(10);
+        this.expiryTime = LocalDateTime.now().plusMinutes(expiryMinutes);
     }
 }

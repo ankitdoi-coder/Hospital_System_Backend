@@ -4,6 +4,7 @@ import com.ankit.HealthCare_Backend.authentication.entity.EmailOtp;
 import com.ankit.HealthCare_Backend.authentication.repository.EmailOtpRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -18,12 +19,15 @@ public class EmailOtpService {
     private final EmailOtpRepository otpRepo;
     private final JavaMailSender mailSender;
 
+    @Value("${app.otp.expiry-minutes:10}")
+    private int otpExpiryMinutes;
+
     @Transactional
     public void sendOtp(String email) {
         otpRepo.deleteByEmail(email); // clear any previous OTP for this email
 
         String otp = String.format("%06d", new Random().nextInt(999999));
-        otpRepo.save(new EmailOtp(email, otp));
+        otpRepo.save(new EmailOtp(email, otp, otpExpiryMinutes));
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(email);
