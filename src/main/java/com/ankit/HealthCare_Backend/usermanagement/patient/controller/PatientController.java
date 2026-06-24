@@ -20,9 +20,13 @@ import com.ankit.HealthCare_Backend.usermanagement.doctor.dto.DoctorDTO;
 import com.ankit.HealthCare_Backend.usermanagement.patient.dto.PatientDTO;
 import com.ankit.HealthCare_Backend.usermanagement.patient.service.PatientService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
+
+import org.springframework.validation.annotation.Validated;
 
 @RestController
 @RequestMapping("/api/patient")
+@Validated
 public class PatientController {
     @Autowired
     private PatientService patientService;
@@ -71,14 +75,14 @@ public class PatientController {
 
     // Make payment
     @PutMapping("/appointments/{id}/pay")
-    public ResponseEntity<String> makePayment(@PathVariable Long id) {
+    public ResponseEntity<String> makePayment(@Positive(message = "Appointment ID must be positive") @PathVariable Long id) {
         patientService.makePayment(id);
         return ResponseEntity.ok("Payment successful");
     }
 
     // Cancel appointment
     @DeleteMapping("/appointments/{id}/cancel")
-    public ResponseEntity<String> cancelAppointment(@PathVariable Long id) {
+    public ResponseEntity<String> cancelAppointment(@Positive(message = "Appointment ID must be positive") @PathVariable Long id) {
         patientService.cancelAppointment(id);
         return ResponseEntity.ok("Appointment cancelled successfully");
     }
