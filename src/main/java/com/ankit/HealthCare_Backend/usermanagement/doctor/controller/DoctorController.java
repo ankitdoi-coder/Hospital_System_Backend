@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -11,6 +12,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 
 import com.ankit.HealthCare_Backend.appointment.dto.AppointmentDTO;
 import com.ankit.HealthCare_Backend.appointment.dto.UpdateStatusDTO;
@@ -23,6 +27,7 @@ import com.ankit.HealthCare_Backend.usermanagement.patient.dto.PatientDTO;
 
 @RestController
 @RequestMapping("/api/doctor")
+@Validated
 public class DoctorController {
     @Autowired
     private DoctorService doctorService;
@@ -50,8 +55,8 @@ public class DoctorController {
     // change appointment Status
     @PutMapping("/appointments/{id}/status")
     public ResponseEntity<AppointmentDTO> updateAppointmentStatus(
-            @PathVariable Long id,
-            @RequestBody UpdateStatusDTO statusDTO) {
+            @Positive(message = "Appointment ID must be positive") @PathVariable Long id,
+            @Valid @RequestBody UpdateStatusDTO statusDTO) {
 
         AppointmentDTO updatedAppointment = doctorService.updateAppointmentStatus(id, statusDTO);
         return ResponseEntity.ok(updatedAppointment);
@@ -59,7 +64,7 @@ public class DoctorController {
 
     // Create a new prescription for a completed appointment.
     @PostMapping("/prescription")
-    public ResponseEntity<PrescriptionDTO> createPrescription(@RequestBody PrescriptionDTO prescriptionDTO) {
+    public ResponseEntity<PrescriptionDTO> createPrescription(@Valid @RequestBody PrescriptionDTO prescriptionDTO) {
         PrescriptionDTO createdPrescription = doctorService.createPrescription(prescriptionDTO);
         return ResponseEntity.ok(createdPrescription);
     }
