@@ -1,11 +1,18 @@
 package com.ankit.HealthCare_Backend.authentication.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.ankit.HealthCare_Backend.Exception.DuplicateResourceException;
 import com.ankit.HealthCare_Backend.Exception.ResourceNotFoundException;
+import com.ankit.HealthCare_Backend.Exception.UnauthorizedException;
+import com.ankit.HealthCare_Backend.authentication.dto.LoginRequestDTO;
+import com.ankit.HealthCare_Backend.authentication.dto.LoginResponseDTO;
+import com.ankit.HealthCare_Backend.authentication.security.JwtService;
 import com.ankit.HealthCare_Backend.usermanagement.doctor.entity.Doctor;
 import com.ankit.HealthCare_Backend.usermanagement.doctor.repository.DoctorRepository;
 import com.ankit.HealthCare_Backend.core.entity.Role;
@@ -16,31 +23,55 @@ import com.ankit.HealthCare_Backend.usermanagement.user.entity.PasswordResetToke
 import com.ankit.HealthCare_Backend.usermanagement.user.repository.PasswordResetTokenRepository;
 import com.ankit.HealthCare_Backend.usermanagement.user.entity.User;
 import com.ankit.HealthCare_Backend.usermanagement.user.repository.UserRepository;
+import com.ankit.HealthCare_Backend.usermanagement.user.service.UserDetailsService;
 import com.ankit.HealthCare_Backend.authentication.dto.UserResponseDTO;
 import com.ankit.HealthCare_Backend.authentication.dto.RegisterRequestDTO;
 
-import com.ankit.HealthCare_Backend.authentication.service.EmailOtpService;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
-    @Autowired
-    private UserRepository userRepo;
-    @Autowired
-    private RoleRepository roleRepo;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-    @Autowired
-    private DoctorRepository doctorRepo;
-    @Autowired
-    private PatientRepository patientRepo;
-    @Autowired
-    private PasswordResetTokenRepository passwordResetTokenRepo;
+    private final UserRepository userRepo;
+    private final RoleRepository roleRepo;
+    private final PasswordEncoder passwordEncoder;
+    private final DoctorRepository doctorRepo;
+    private final PatientRepository patientRepo;
+    private final PasswordResetTokenRepository passwordResetTokenRepo;
+    private final EmailOtpService emailOtpService;
+    private final AuthenticationManager authenticationManager;
+    private final UserDetailsService customUserDetailsService;
+    private final JwtService jwtService;
 
-    @Autowired
-    private EmailOtpService emailOtpService;
+    @Override
+    public LoginResponseDTO login(LoginRequestDTO loginRequest) {
+        try {
+            authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
+            );
+        } catch (BadCredentialsException e) {
+            throw new UnauthorizedException("Invalid email or password");
+        }
+
+        UserDetails userDetails = customUserDetailsService.loadUserByUsername(loginRequest.getEmail());
+
+        boolean isDoctor = userDetails.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_DOCTOR"));
+
+        if (isDoctor) {
+            User user = userRepo.findByEmail(loginRequest.getEmail());
+            Doctor doctor = doctorRepo.findByUserId(user.getId());
+            if (doctor == null || !doctor.isApproved()) {
+                throw new UnauthorizedException("Your doctor account is not approved yet. Contact admin or wait for approval.");
+            }
+        }
+
+        String jwt = jwtService.generateToken(userDetails);
+        return new LoginResponseDTO(jwt, "Login successful");
+    }
 
     @Override
     @Transactional

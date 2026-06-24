@@ -1,11 +1,6 @@
 package com.ankit.HealthCare_Backend.authentication.controller;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,15 +18,8 @@ import lombok.RequiredArgsConstructor;
 
 import com.ankit.HealthCare_Backend.authentication.service.EmailOtpService;
 import com.ankit.HealthCare_Backend.shared.dto.MessageResponseDTO;
-import com.ankit.HealthCare_Backend.usermanagement.doctor.entity.Doctor;
-import com.ankit.HealthCare_Backend.usermanagement.doctor.repository.DoctorRepository;
-import com.ankit.HealthCare_Backend.usermanagement.user.service.UserDetailsService;
-import com.ankit.HealthCare_Backend.usermanagement.user.entity.User;
-import com.ankit.HealthCare_Backend.usermanagement.user.repository.UserRepository;
-import com.ankit.HealthCare_Backend.authentication.security.JwtService;
 import com.ankit.HealthCare_Backend.authentication.service.AuthService;
 import com.ankit.HealthCare_Backend.authentication.dto.*;
-import com.ankit.HealthCare_Backend.authentication.dto.LoginRequestDTO;
 
 
 @RestController
@@ -39,11 +27,6 @@ import com.ankit.HealthCare_Backend.authentication.dto.LoginRequestDTO;
 @CrossOrigin(origins = {"http://localhost:5173", "http://localhost:3000"})
 @RequiredArgsConstructor
 public class AuthenticationController {
-    private final DoctorRepository doctorRepo;
-    private final UserRepository userRepo;
-    private final UserDetailsService customUserDetailsService;
-    private final AuthenticationManager authenticationManager;
-    private final JwtService jwtService;
     private final AuthService authService;
     private final EmailOtpService emailOtpService;
 
@@ -71,45 +54,7 @@ public class AuthenticationController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDTO> login(@Valid @RequestBody LoginRequestDTO loginRequest) {
-        try {
-            authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                    loginRequest.getEmail(), 
-                    loginRequest.getPassword()
-                )
-            );
-            
-            final UserDetails userDetails = customUserDetailsService.loadUserByUsername(loginRequest.getEmail());
-
-            boolean isDoctor = userDetails.getAuthorities().stream()
-                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_DOCTOR"));
-
-            if (isDoctor) {
-                User user = userRepo.findByEmail(userDetails.getUsername());
-                Doctor doctor = doctorRepo.findByUserId(user.getId());
-
-                if (doctor != null && doctor.isApproved()) {
-                    final String jwt = jwtService.generateToken(userDetails);
-                    return ResponseEntity.ok(new LoginResponseDTO(jwt, "Login successful"));
-                } else {
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                        new LoginResponseDTO(null, "Your doctor account is not approved yet. Contact admin or wait for approval.")
-                    );
-                }
-            } else {
-                final String jwt = jwtService.generateToken(userDetails);
-                return ResponseEntity.ok(new LoginResponseDTO(jwt, "Login successful"));
-            }
-
-        } catch (BadCredentialsException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                new LoginResponseDTO(null, "Invalid email or password")
-            );
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                new LoginResponseDTO(null, "An error occurred during login: " + e.getMessage())
-            );
-        }
+        return ResponseEntity.ok(authService.login(loginRequest));
     }
 
     @PostMapping("/forgot-password")
