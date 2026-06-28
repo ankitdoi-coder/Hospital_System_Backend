@@ -71,6 +71,12 @@ public class AuthenticationController {
         return ResponseEntity.ok(new MessageResponseDTO(message));
     }
 
+    @PostMapping("/verify-reset-token")
+    public ResponseEntity<Boolean> verifyResetToken(@Valid @RequestBody VerifyResetTokenRequestDTO request) {
+        boolean isValid = authService.verifyResetToken(request.getEmail(), request.getToken());
+        return ResponseEntity.ok(isValid);
+    }
+
     @GetMapping("/oauth2/callback")
     public void oauthCallback(@RequestParam String token, HttpServletResponse response) throws IOException {
         response.sendRedirect("http://localhost:5173/login?token=" + token);

@@ -9,5 +9,6 @@ public interface AuthService {
     UserResponseDTO registerUser(RegisterRequestDTO registerRequest);
     LoginResponseDTO login(LoginRequestDTO loginRequest);
     String forgotPassword(String email);
+    boolean verifyResetToken(String email, String token);
     String resetPassword(String token, String newPassword);
 }

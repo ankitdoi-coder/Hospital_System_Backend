@@ -1,5 +1,10 @@
 package com.ankit.HealthCare_Backend.authentication.service;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -12,25 +17,23 @@ import com.ankit.HealthCare_Backend.Exception.ResourceNotFoundException;
 import com.ankit.HealthCare_Backend.Exception.UnauthorizedException;
 import com.ankit.HealthCare_Backend.authentication.dto.LoginRequestDTO;
 import com.ankit.HealthCare_Backend.authentication.dto.LoginResponseDTO;
+import com.ankit.HealthCare_Backend.authentication.dto.RegisterRequestDTO;
+import com.ankit.HealthCare_Backend.authentication.dto.UserResponseDTO;
 import com.ankit.HealthCare_Backend.authentication.security.JwtService;
+import com.ankit.HealthCare_Backend.core.entity.Role;
+import com.ankit.HealthCare_Backend.core.repository.RoleRepository;
 import com.ankit.HealthCare_Backend.usermanagement.doctor.entity.Doctor;
 import com.ankit.HealthCare_Backend.usermanagement.doctor.repository.DoctorRepository;
-import com.ankit.HealthCare_Backend.core.entity.Role;
 import com.ankit.HealthCare_Backend.usermanagement.patient.entity.Patient;
 import com.ankit.HealthCare_Backend.usermanagement.patient.repository.PatientRepository;
-import com.ankit.HealthCare_Backend.core.repository.RoleRepository;
 import com.ankit.HealthCare_Backend.usermanagement.user.entity.PasswordResetToken;
-import com.ankit.HealthCare_Backend.usermanagement.user.repository.PasswordResetTokenRepository;
 import com.ankit.HealthCare_Backend.usermanagement.user.entity.User;
+import com.ankit.HealthCare_Backend.usermanagement.user.repository.PasswordResetTokenRepository;
 import com.ankit.HealthCare_Backend.usermanagement.user.repository.UserRepository;
 import com.ankit.HealthCare_Backend.usermanagement.user.service.UserDetailsService;
-import com.ankit.HealthCare_Backend.authentication.dto.UserResponseDTO;
-import com.ankit.HealthCare_Backend.authentication.dto.RegisterRequestDTO;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -42,6 +45,7 @@ public class AuthServiceImpl implements AuthService {
     private final PatientRepository patientRepo;
     private final PasswordResetTokenRepository passwordResetTokenRepo;
     private final EmailOtpService emailOtpService;
+    private final JavaMailSender mailSender;
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService customUserDetailsService;
     private final JwtService jwtService;
@@ -145,7 +149,7 @@ public class AuthServiceImpl implements AuthService {
             throw new ResourceNotFoundException("User not found with email: " + email);
         }
 
-        // Check if user is a patient or doctor (not admin)
+       
         String roleName = user.getRole().getName();
         if (!"PATIENT".equalsIgnoreCase(roleName) && !"DOCTOR".equalsIgnoreCase(roleName)) {
             throw new RuntimeException("Password reset is only available for patients and doctors");
@@ -161,7 +165,32 @@ public class AuthServiceImpl implements AuthService {
 
         // In a real application, you would send an email here
         // For now, we'll return the token (in production, this should be sent via email)
-        return "Password reset token generated. Token: " + token + " (In production, this would be sent via email)";
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(email);
+        message.setSubject("Password Reset Token: Please Do not Share");
+        message.setText(
+            "Hello,\n\n" +
+            "Your password reset token is: " + token + "\n\n" +
+            "This token is valid for 10 minutes. Please do not share it with anyone.\n\n" +
+            "Regards,\n" +
+            "Team HealthCare Copilot"
+        );
+        mailSender.send(message);
+        return "Password reset token Sent to Email Check";
+    }
+
+    public boolean verifyResetToken(String email, String token) {
+        User user = userRepo.findByEmail(email);
+        if (user == null) {
+            return false;
+        }
+
+        return passwordResetTokenRepo.findByToken(token)
+                .filter(resetToken -> resetToken.getUser().getId().equals(user.getId()))
+                .filter(resetToken -> !resetToken.isUsed())
+                .filter(resetToken -> !resetToken.getExpiryDate().isBefore(LocalDateTime.now()))
+                .isPresent();
     }
 
     @Override

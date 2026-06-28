@@ -42,7 +42,7 @@ public class EmailOtpService {
             "If you did not attempt to register, please ignore this email.\n" +
             "Your account will not be created without completing verification.\n\n" +
             "Regards,\n" +
-            "The HealthCare Portal Team"
+            "Team HealthCare Copilot"
         );
         mailSender.send(message);
     }
