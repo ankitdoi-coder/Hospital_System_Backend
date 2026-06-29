@@ -1,0 +1,50 @@
+spring.application.name=HealthCare-Backend
+
+# ==================================
+# DATABASE (JPA/HIBERNATE)
+# ==================================
+# Set via environment variables: DB_URL, DB_USERNAME, DB_PASSWORD
+spring.datasource.url=${DB_URL:jdbc:mysql://localhost:3306/healthcaredb?sessionVariables=FOREIGN_KEY_CHECKS=0}
+spring.datasource.username=${DB_USERNAME:root}
+spring.datasource.password=${DB_PASSWORD}
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
+spring.jpa.defer-datasource-initialization=true
+spring.sql.init.mode=always
+
+# ==================================
+# CUSTOM APP SETTINGS
+# ==================================
+# JWT Secret - Set via environment variable: JWT_SECRET
+app.jwt.secret=${JWT_SECRET}
+
+# JWT Expiry (ms) — 86400000 = 24 hours
+app.jwt.expiration-ms=86400000
+
+# OTP Expiry (minutes)
+app.otp.expiry-minutes=10
+
+# Jackson (JSON) settings
+spring.jackson.mapper.accept-case-insensitive-enums=true
+
+# ==================================
+# OAUTH2 / GOOGLE LOGIN
+# ==================================
+# Set via environment variables: OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET
+spring.security.oauth2.client.registration.google.client-id=${OAUTH_CLIENT_ID}
+spring.security.oauth2.client.registration.google.client-secret=${OAUTH_CLIENT_SECRET}
+spring.security.oauth2.client.registration.google.scope=openid,profile,email
+
+# Frontend redirect URI after successful OAuth2 login
+app.oauth2.redirectUri=http://localhost:5173/oauth2/redirect
+# Backend OAuth2 callback URI
+app.oauth2.callbackUri=http://localhost:8080/api/auth/oauth2/callback
+
+# CORS allowed origins
+app.cors.allowed-origins=http://localhost:5173
+
+# Enable OAuth2 debug logging
+logging.level.org.springframework.security.oauth2=DEBUG

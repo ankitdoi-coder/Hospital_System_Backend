@@ -34,9 +34,11 @@ import com.ankit.HealthCare_Backend.usermanagement.user.service.UserDetailsServi
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepo;
     private final RoleRepository roleRepo;
@@ -80,6 +82,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public UserResponseDTO registerUser(RegisterRequestDTO registerRequest) {
+        log.info("registering new User :"+registerRequest.getEmail());
         if (!emailOtpService.isEmailVerified(registerRequest.getEmail())) {
             throw new IllegalArgumentException("Email not verified. Please verify your email with OTP first.");
         }
@@ -106,6 +109,7 @@ public class AuthServiceImpl implements AuthService {
         
         // Part 2: Create the Doctor or Patient profile and add details to the response
         if ("DOCTOR".equalsIgnoreCase(userRole.getName())) {
+            log.info("registering user as doctor");
             Doctor newDoctor = new Doctor();
             newDoctor.setFirstName(registerRequest.getFirstName());
             newDoctor.setLastName(registerRequest.getLastName());
@@ -122,6 +126,7 @@ public class AuthServiceImpl implements AuthService {
             response.setMessage("Approval request sent to admin!");
 
         } else if ("PATIENT".equalsIgnoreCase(userRole.getName())) {
+            log.info("registering user as patient");
             Patient newPatient = new Patient();
             newPatient.setFirstName(registerRequest.getFirstName());
             newPatient.setLastName(registerRequest.getLastName());
@@ -139,11 +144,13 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // ✅ This is the final, guaranteed return statement
+        log.info("registerd  Success");
         return response;
     }
 
     @Override
     public String forgotPassword(String email) {
+        log.info("finding user by email"+email);
         User user = userRepo.findByEmail(email);
         if (user == null) {
             throw new ResourceNotFoundException("User not found with email: " + email);
@@ -156,12 +163,15 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // Delete any existing tokens for this user
+        log.info("deleting the existing token for reset the password");
         passwordResetTokenRepo.deleteByUserId(user.getId());
 
         // Generate new token
+        log.info("generating new Password reset token");
         String token = UUID.randomUUID().toString();
         PasswordResetToken resetToken = new PasswordResetToken(token, user);
         passwordResetTokenRepo.save(resetToken);
+        log.info("password reset Token Succesfully generated ");
 
         // In a real application, you would send an email here
         // For now, we'll return the token (in production, this should be sent via email)
@@ -177,28 +187,41 @@ public class AuthServiceImpl implements AuthService {
             "Team HealthCare Copilot"
         );
         mailSender.send(message);
+        log.info("send TOKEN to the MAIL ");
         return "Password reset token Sent to Email Check";
     }
 
     public boolean verifyResetToken(String email, String token) {
+        log.info("Verifying reset token for user: {}", email);
+
         User user = userRepo.findByEmail(email);
         if (user == null) {
+            log.warn("Verification failed: User not found for email: {}", email);
             return false;
         }
 
-        return passwordResetTokenRepo.findByToken(token)
+        boolean isTokenValid = passwordResetTokenRepo.findByToken(token)
                 .filter(resetToken -> resetToken.getUser().getId().equals(user.getId()))
                 .filter(resetToken -> !resetToken.isUsed())
                 .filter(resetToken -> !resetToken.getExpiryDate().isBefore(LocalDateTime.now()))
                 .isPresent();
+
+        if (isTokenValid) {
+            log.info("Token is valid for user: {}", email);
+        } else {
+            log.warn("Token is invalid, expired, or already used for user: {}", email);
+        }
+        return isTokenValid;
     }
 
     @Override
     @Transactional
     public String resetPassword(String token, String newPassword) {
+
         PasswordResetToken resetToken = passwordResetTokenRepo.findByToken(token)
                 .orElseThrow(() -> new ResourceNotFoundException("Invalid or expired reset token"));
 
+        log.info("Checking Token Expirey ");
         if (resetToken.getExpiryDate().isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("Reset token has expired");
         }
@@ -211,6 +234,7 @@ public class AuthServiceImpl implements AuthService {
         User user = resetToken.getUser();
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepo.save(user);
+        log.info("Password updated for the user:"+user.getId());
 
         // Mark token as used
         resetToken.setUsed(true);

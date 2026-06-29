@@ -33,5 +33,12 @@ build/
 .vscode/
 
 ### Secrets — never commit these ###
-src/main/resources/application.properties
 .env
+.env.local
+.env.*.local
+application-local.properties
+*.pem
+*.key
+*.p12
+*.jks
+secrets.txt
