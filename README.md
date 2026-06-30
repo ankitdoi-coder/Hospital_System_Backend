@@ -1,6 +1,6 @@
 # 🏥 Smart Healthcare System — Backend
 
-A production-ready, secure, and scalable RESTful API for a **Smart Healthcare Appointment & Records System**, built with **Java 17 + Spring Boot 3.5**. Implements real-world engineering practices including JWT-based auth, role-based access control, centralized exception handling, request validation, OAuth2 social login, billing management, file uploads, and automated API documentation.
+A production-ready, secure, and scalable RESTful API for a **Smart Healthcare Appointment & Records System**, built with **Java 17 + Spring Boot 3.5**. Implements real-world engineering practices including JWT-based auth, role-based access control, centralized exception handling, request validation, OAuth2 social login, **Razorpay payment gateway integration**, billing management, file uploads, and automated API documentation.
 
 ---
 
@@ -11,6 +11,7 @@ A production-ready, secure, and scalable RESTful API for a **Smart Healthcare Ap
 | **JWT Auth + Role-Based Access** | Stateless authentication with role-scoped endpoints (ADMIN / DOCTOR / PATIENT) |
 | **Email OTP Verification** | 6-digit OTP sent via email before registration; 10-minute expiry, single-use, auto-cleared on resend |
 | **Google OAuth2 Social Login** | Patients and doctors can sign in with Google via Spring OAuth2 client |
+| **Razorpay Payment Gateway** | Real, verified online payments for appointment billing — UPI, Cards & Netbanking, with server-side signature verification |
 | **Global Exception Handler** | `@RestControllerAdvice` catches all exceptions — validation, auth, not-found, duplicates — and returns consistent JSON error responses with timestamp |
 | **Bean Validation** | `@Valid` + Jakarta Validation annotations (`@NotNull`, `@NotBlank`, `@Email`, `@Digits`) on all request DTOs |
 | **Doctor Approval Workflow** | Doctors register but are locked out until an Admin approves their account |
@@ -40,7 +41,7 @@ The codebase is organized by **domain modules** (feature-based packaging), not b
 com.ankit.HealthCare_Backend/
 ├── appointment/          # Appointment booking, status updates
 ├── authentication/       # JWT, OAuth2, Security config, Auth endpoints
-├── billing/              # Billing records, payment, revenue stats
+├── billing/              # Billing records, payment, revenue stats, Razorpay integration
 ├── communication/        # Contact Us feature
 ├── core/                 # Shared enums (AppointmentStatus, BillingStatus), Role entity
 ├── Exception/            # GlobalExceptionHandler + custom exceptions
@@ -59,6 +60,7 @@ com.ankit.HealthCare_Backend/
 | Framework | Spring Boot | 3.5.7 |
 | Security | Spring Security + JWT (jjwt) | 6.5.7 / 0.11.5 |
 | Social Login | Spring OAuth2 Client (Google) | 6.5.7 |
+| Payment Gateway | Razorpay Java SDK | Latest stable |
 | Email | Spring Boot Starter Mail (JavaMailSender) | 3.5.7 |
 | ORM | Spring Data JPA + Hibernate | 3.5.7 |
 | Database | MySQL (mysql-connector-j) | 8.3.0 |
@@ -83,7 +85,66 @@ Request → JwtFilter → Validate Token → Set SecurityContext → @PreAuthori
 5. **Role Guards** — `/api/patient/**` → `ROLE_PATIENT`, `/api/doctor/**` → `ROLE_DOCTOR`, `/api/admin/**` → `ROLE_ADMIN`
 6. **Email OTP** — `POST /api/auth/send-otp` sends a 6-digit OTP; `POST /api/auth/verify-otp` validates it before allowing registration
 7. **Password Reset** — Secure time-limited token flow via `POST /api/auth/forgot-password` → `POST /api/auth/reset-password`
-7. **BCrypt** — All passwords hashed with `BCryptPasswordEncoder`
+8. **BCrypt** — All passwords hashed with `BCryptPasswordEncoder`
+9. **Payment Signature Verification** — Every Razorpay payment is verified server-side via HMAC signature before billing status changes — the client can never self-report a payment as successful
+
+---
+
+## 💳 Payment Gateway Integration (Razorpay)
+
+The billing module integrates **Razorpay** end-to-end for appointment payments — not a mocked checkout, but a real gateway integration with proper order lifecycle and server-side trust boundaries.
+
+### What's Implemented
+
+| Capability | Status |
+|---|---|
+| Order creation via backend (`POST /api/patient/payments/create-order`) | ✅ Implemented |
+| Razorpay Checkout (UPI, Cards, Netbanking) | ✅ Implemented |
+| Server-side payment signature verification (HMAC-SHA256) | ✅ Implemented |
+| Real-time billing status sync (`UNPAID` → `PAID`) | ✅ Implemented |
+| Payment failure & checkout-dismissal handling | ✅ Implemented |
+| Revenue reporting (daily / monthly) | ✅ Implemented |
+
+### Why It's Built This Way
+
+A naive integration trusts the frontend to say "payment succeeded." This one doesn't. The flow is:
+
+```
+1. Frontend requests an order  ──▶  Backend calls Razorpay Orders API, returns order_id
+2. Razorpay Checkout opens     ──▶  User pays via UPI / Card / Netbanking
+3. Razorpay returns            ──▶  payment_id, order_id, signature  (to frontend)
+4. Frontend forwards these     ──▶  Backend verification endpoint
+5. Backend recomputes HMAC     ──▶  using Razorpay key secret
+6. Only on signature match     ──▶  Billing status flips to PAID
+```
+
+This is the same trust model used by real fintech and healthtech platforms — the **backend is the single source of truth** for what counts as a successful payment, never the client.
+
+### Testing the Payment Flow (Test Mode)
+
+Razorpay's Test Mode sandbox reproduces the entire checkout, OTP, and verification flow with zero real money movement — used to validate this integration end-to-end.
+
+**Card Payment**
+
+| Field | Test Value |
+|---|---|
+| Card Number | `4111 1111 1111 1111` (Visa) or `5267 3181 8797 5449` (Mastercard) |
+| Expiry (MM/YY) | Any future date — e.g. `12/30` |
+| CVV | Any 3 digits — e.g. `123` |
+| Cardholder Name | Any name |
+| OTP | Any 4–10 digit number — e.g. `1234` |
+
+Select **Success** on Razorpay's mock bank page to complete the simulated transaction, or use card `4000 0000 0000 0002` and select **Failure** to test the failure path.
+
+**UPI Payment**
+
+| Field | Test Value |
+|---|---|
+| UPI ID | `success@razorpay` |
+
+No need to scan the on-screen QR with a real device — that only resolves against live, NPCI-registered transactions. Entering the test UPI ID simulates an instant successful payment in sandbox mode.
+
+Going live requires only swapping the test key (`rzp_test_...`) for a live key (`rzp_live_...`) post KYC/activation on Razorpay's dashboard — no changes to the integration logic itself.
 
 ---
 
@@ -106,6 +167,7 @@ A single `@RestControllerAdvice` class handles all error scenarios and returns a
 | `UnauthorizedException` | `401 Unauthorized` |
 | `IllegalArgumentException` | `400 Bad Request` |
 | `MethodArgumentNotValidException` | `400 Bad Request` (validation errors) |
+| `PaymentVerificationException` | `400 Bad Request` (Razorpay signature mismatch) |
 | `Exception` (fallback) | `500 Internal Server Error` |
 
 ---
@@ -124,6 +186,12 @@ All incoming request DTOs are validated with **Jakarta Bean Validation** annotat
 @NotNull  private Long patientId;
 @NotNull  private Long doctorId;
 @NotNull  private LocalDate appointmentDate;
+
+// PaymentVerificationDTO example
+@NotNull @NotBlank  private String razorpayOrderId;
+@NotNull @NotBlank  private String razorpayPaymentId;
+@NotNull @NotBlank  private String razorpaySignature;
+@NotNull             private Long appointmentId;
 ```
 
 Validation failures are caught by the Global Exception Handler and returned as structured `400 Bad Request` responses.
@@ -151,6 +219,8 @@ Validation failures are caught by the Global Exception Handler and returned as s
 | GET | `/appointments/my` | View personal appointment history |
 | DELETE | `/appointments/{id}/cancel` | Cancel an appointment |
 | PUT | `/appointments/{id}/pay` | Make payment for an appointment |
+| POST | `/payments/create-order` | Create a Razorpay order for an appointment |
+| POST | `/payments/verify` | Verify Razorpay payment signature and mark billing as `PAID` |
 | GET | `/prescriptions` | View personal prescriptions |
 | GET | `/profile` | View own patient profile |
 
@@ -184,6 +254,8 @@ Validation failures are caught by the Global Exception Handler and returned as s
 
 Core entities: `User`, `Role`, `Patient`, `Doctor`, `Admin`, `Appointment`, `Prescription`, `Billing`, `ProfilePicture`, `ContactUs`, `Notification`, `PasswordResetToken`
 
+`Billing` stores the Razorpay `orderId`, `paymentId`, and `status` (`UNPAID` / `PAID`) per appointment, giving a full payment audit trail per record.
+
 ---
 
 ## 📖 API Documentation (Swagger)
@@ -202,6 +274,7 @@ http://localhost:8080/swagger-ui/index.html
 - Java 17+
 - Maven 3.x
 - MySQL 8.x
+- A Razorpay account (Test Mode keys are free — no business verification needed to start testing)
 
 ### Setup
 
@@ -222,6 +295,8 @@ spring.datasource.username=${DB_USERNAME}
 spring.datasource.password=${DB_PASSWORD}
 app.jwt.secret=${JWT_SECRET}
 app.jwt.expiration=${JWT_EXPIRATION_MS}
+razorpay.key.id=${RAZORPAY_KEY_ID}
+razorpay.key.secret=${RAZORPAY_KEY_SECRET}
 ```
 
 Run:
@@ -241,4 +316,18 @@ Server starts at `http://localhost:8080`
 | `DB_USERNAME` | Database username | `root` |
 | `DB_PASSWORD` | Database password | `your_password` |
 | `JWT_SECRET` | Secret key for signing JWTs | `a-very-long-random-secret-key` |
-| `JWT_EXPIRATION_MS` | Token TTL inBoot  milliseconds | `86400000` (24h) |
+| `JWT_EXPIRATION_MS` | Token TTL in milliseconds | `86400000` (24h) |
+| `RAZORPAY_KEY_ID` | Razorpay API Key ID (test or live) | `rzp_test_xxxxxxxxxxxx` |
+| `RAZORPAY_KEY_SECRET` | Razorpay API Key Secret (test or live) | `your_razorpay_key_secret` |
+
+---
+
+## 👀 For Reviewers
+
+This project was built to demonstrate practical, production-grade backend engineering rather than tutorial-level CRUD:
+
+- **Security-first payment handling** — billing status is never trusted from the client; it's gated behind server-side HMAC signature verification, mirroring real fintech/healthtech systems.
+- **Stateless, role-scoped JWT auth** with a proper OAuth2 social login path alongside it.
+- **Consistent error contracts** across the entire API via a single global exception handler.
+- **Domain-driven package structure** that scales cleanly as features are added, rather than a flat MVC layout.
+- **Real third-party integration experience** with Razorpay's order lifecycle (create → checkout → verify), not a simulated or mocked payment button.
