@@ -13,6 +13,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+
 import com.ankit.HealthCare_Backend.appointment.dto.AppointmentDTO;
 import com.ankit.HealthCare_Backend.prescription.dto.PrescriptionDTO;
 import com.ankit.HealthCare_Backend.usermanagement.doctor.dto.DoctorDTO;
@@ -21,9 +28,10 @@ import com.ankit.HealthCare_Backend.usermanagement.patient.service.PatientServic
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.validation.annotation.Validated;
 
+@Tag(name = "Patient", description = "Patient operations — requires PATIENT role JWT token")
+@SecurityRequirement(name = "Bearer Auth")
 @RestController
 @RequestMapping("/api/patient")
 @Validated
@@ -31,58 +39,75 @@ import org.springframework.validation.annotation.Validated;
 public class PatientController {
     private final PatientService patientService;
 
-    // gets the List of the doctors
+    @Operation(summary = "Get all approved doctors", description = "Returns list of all doctors approved by admin — used to select a doctor when booking appointment")
+    @ApiResponse(responseCode = "200", description = "List of doctors returned")
     @GetMapping("/doctors")
     public ResponseEntity<List<DoctorDTO>> getDoctors() {
         List<DoctorDTO> doctors = patientService.getAllDoctors();
         return ResponseEntity.ok(doctors);
     }
 
-    // Book a new Appointment
+    @Operation(summary = "Book a new appointment", description = "Books an appointment with a doctor. Pass doctorId and appointmentDate in the request body")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Appointment booked successfully"),
+        @ApiResponse(responseCode = "400", description = "Validation error in request body"),
+        @ApiResponse(responseCode = "404", description = "Doctor not found")
+    })
     @PostMapping("/appointments/new")
     public ResponseEntity<AppointmentDTO> newAppointment(
-           @Valid @RequestBody AppointmentDTO appointmentDTO,
+            @Valid @RequestBody AppointmentDTO appointmentDTO,
             Authentication authentication) {
-
-        // Get patient email from JWT
         String patientEmail = authentication.getName();
-
-        // Pass email to service to find patient
         AppointmentDTO newAppointment = patientService.newAppointment(appointmentDTO, patientEmail);
         return ResponseEntity.ok(newAppointment);
     }
 
-    // View personal appointment history
+    @Operation(summary = "Get my appointment history", description = "Returns all appointments (past and upcoming) for the logged-in patient")
+    @ApiResponse(responseCode = "200", description = "Appointment list returned")
     @GetMapping("/appointments/my")
     public ResponseEntity<List<AppointmentDTO>> myAppointments() {
         List<AppointmentDTO> appointments = patientService.getMyAppointments();
         return ResponseEntity.ok(appointments);
     }
 
-    // Get my prescriptions
+    @Operation(summary = "Get my prescriptions", description = "Returns all prescriptions issued to the logged-in patient")
+    @ApiResponse(responseCode = "200", description = "Prescription list returned")
     @GetMapping("/prescriptions")
     public ResponseEntity<List<PrescriptionDTO>> myPrescriptions() {
         List<PrescriptionDTO> prescriptions = patientService.getMyPrescriptions();
         return ResponseEntity.ok(prescriptions);
     }
 
-    // Get my profile
+    @Operation(summary = "Get my profile", description = "Returns the logged-in patient's profile details")
+    @ApiResponse(responseCode = "200", description = "Patient profile returned")
     @GetMapping("/profile")
     public ResponseEntity<PatientDTO> myProfile() {
         PatientDTO profile = patientService.getMyProfile();
         return ResponseEntity.ok(profile);
     }
 
-    // Make payment
+    @Operation(summary = "Make payment for appointment", description = "Marks the billing status of an appointment as PAID")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Payment successful"),
+        @ApiResponse(responseCode = "404", description = "Appointment not found")
+    })
     @PutMapping("/appointments/{id}/pay")
-    public ResponseEntity<String> makePayment(@Positive(message = "Appointment ID must be positive") @PathVariable Long id) {
+    public ResponseEntity<String> makePayment(
+            @Parameter(description = "Appointment ID", required = true, example = "1")
+            @Positive(message = "Appointment ID must be positive") @PathVariable Long id) {
         patientService.makePayment(id);
         return ResponseEntity.ok("Payment successful");
     }
 
-    // Cancel appointment
+    @Operation(summary = "Cancel an appointment", description = "Cancels a pending or scheduled appointment by ID")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Appointment cancelled successfully"),
+        @ApiResponse(responseCode = "404", description = "Appointment not found")
+    })
     @DeleteMapping("/appointments/{id}/cancel")
-    public ResponseEntity<String> cancelAppointment(@Positive(message = "Appointment ID must be positive") @PathVariable Long id) {
+    public ResponseEntity<String> cancelAppointment(
+            @Parameter(description = "Appointment ID", required = true, example = "1")
+            @Positive(message = "Appointment ID must be positive") @PathVariable Long id) {
         patientService.cancelAppointment(id);
         return ResponseEntity.ok("Appointment cancelled successfully");
     }

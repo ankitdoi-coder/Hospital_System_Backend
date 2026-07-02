@@ -8,6 +8,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+
 import com.ankit.HealthCare_Backend.billing.dto.BillingDTO;
 import com.ankit.HealthCare_Backend.usermanagement.admin.service.AdminService;
 import com.ankit.HealthCare_Backend.usermanagement.doctor.dto.DoctorDTO;
@@ -20,6 +27,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
+@Tag(name = "Admin", description = "Admin operations — requires ADMIN role JWT token")
+@SecurityRequirement(name = "Bearer Auth")
 @RestController
 @RequestMapping("/api/admin")
 @Validated
@@ -27,63 +36,82 @@ import org.springframework.web.bind.annotation.RequestBody;
 public class AdminController {
     private final AdminService adminService;
 
-    // doctors list
+    @Operation(summary = "Get all doctors", description = "Returns all registered doctors including pending, approved and rejected ones")
+    @ApiResponse(responseCode = "200", description = "Doctor list returned")
     @GetMapping("/doctors")
     public ResponseEntity<List<DoctorDTO>> getAllDoctors() {
-        // 1. Give the list a variable name, like "doctors"
         List<DoctorDTO> doctors = adminService.getAllDoctors();
-
-        // 2. Return the list inside a ResponseEntity
         return ResponseEntity.ok(doctors);
     }
 
-    // to approve
+    @Operation(summary = "Approve a doctor", description = "Approves a doctor account so they can login and accept appointments")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Doctor approved successfully"),
+        @ApiResponse(responseCode = "404", description = "Doctor not found")
+    })
     @PutMapping("/doctors/{id}/approve")
-    public ResponseEntity<DoctorDTO> approveDoctor(@Positive(message = "Doctor ID must be positive") @PathVariable Long id) {
+    public ResponseEntity<DoctorDTO> approveDoctor(
+            @Parameter(description = "Doctor ID", required = true, example = "1")
+            @Positive(message = "Doctor ID must be positive") @PathVariable Long id) {
         DoctorDTO approvedDoctor = adminService.approveDoctor(id);
-
         return ResponseEntity.ok(approvedDoctor);
     }
-// to reject/revoke doctor
 
+    @Operation(summary = "Reject / revoke a doctor", description = "Rejects or revokes a doctor's approval — they will no longer be able to login")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Doctor rejected successfully"),
+        @ApiResponse(responseCode = "404", description = "Doctor not found")
+    })
     @PutMapping("/doctors/{id}/reject")
-    public ResponseEntity<DoctorDTO> rejectDoctor(@Positive(message = "Doctor ID must be positive") @PathVariable Long id) {
+    public ResponseEntity<DoctorDTO> rejectDoctor(
+            @Parameter(description = "Doctor ID", required = true, example = "1")
+            @Positive(message = "Doctor ID must be positive") @PathVariable Long id) {
         DoctorDTO rejectedDoctor = adminService.rejectDoctor(id);
         return ResponseEntity.ok(rejectedDoctor);
     }
 
-    // patient list
+    @Operation(summary = "Get all patients", description = "Returns all registered patients")
+    @ApiResponse(responseCode = "200", description = "Patient list returned")
     @GetMapping("/patients")
     public ResponseEntity<List<PatientDTO>> getAllPatients() {
         List<PatientDTO> patients = adminService.getAllPatients();
         return ResponseEntity.ok(patients);
     }
 
-    //Get all billing records
+    @Operation(summary = "Get all billing records", description = "Returns all billing records across all appointments")
+    @ApiResponse(responseCode = "200", description = "Billing list returned")
     @GetMapping("/billing")
-    public ResponseEntity<List<BillingDTO>> getAllBilling(){
+    public ResponseEntity<List<BillingDTO>> getAllBilling() {
         List<BillingDTO> billing = adminService.getAllBilling();
         return ResponseEntity.ok(billing);
     }
 
-    //Update billing status
+    @Operation(summary = "Update billing status", description = "Updates the billing status of a record — e.g. PENDING → PAID")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Billing status updated"),
+        @ApiResponse(responseCode = "404", description = "Billing record not found")
+    })
     @PutMapping("/billing/{id}/status")
     public ResponseEntity<BillingDTO> updateBillingStatus(
+            @Parameter(description = "Billing ID", required = true, example = "1")
             @Positive(message = "Billing ID must be positive") @PathVariable Long id,
             @NotBlank(message = "Status cannot be blank") @RequestBody String status) {
         BillingDTO billing = adminService.updateBillingStatus(id, status);
         return ResponseEntity.ok(billing);
     }
 
-    //Get revenue stats
+    @Operation(summary = "Get daily revenue", description = "Returns total revenue collected today across all paid appointments")
+    @ApiResponse(responseCode = "200", description = "Daily revenue amount in rupees")
     @GetMapping("/revenue/daily")
-    public ResponseEntity<Integer> getDailyRevenue(){
+    public ResponseEntity<Integer> getDailyRevenue() {
         Integer revenue = adminService.getDailyRevenue();
         return ResponseEntity.ok(revenue);
     }
 
+    @Operation(summary = "Get monthly revenue", description = "Returns total revenue collected this month across all paid appointments")
+    @ApiResponse(responseCode = "200", description = "Monthly revenue amount in rupees")
     @GetMapping("/revenue/monthly")
-    public ResponseEntity<Integer> getMonthlyRevenue(){
+    public ResponseEntity<Integer> getMonthlyRevenue() {
         Integer revenue = adminService.getMonthlyRevenue();
         return ResponseEntity.ok(revenue);
     }

@@ -12,7 +12,7 @@ import com.ankit.HealthCare_Backend.core.config.AppProperties;
 public class HealthCareBackendApplication {
 
 	public static void main(String[] args) {
-		// Load .env file if it exists (local dev), skip silently in production
+		// Load .env file if it exists (local dev), skip  in production
 		Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
 		dotenv.entries().forEach(e -> {
 			// Only set if not already set as a real system env var (production safe)

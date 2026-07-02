@@ -11,10 +11,17 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import com.ankit.HealthCare_Backend.usermanagement.profile.service.ProfileService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Tag(name = "Files", description = "Public file serving — no authentication required")
 @RestController
 @RequestMapping("/api/files")
 @CrossOrigin(origins = {"http://localhost:5173", "http://localhost:3000"})
@@ -25,29 +32,31 @@ public class FileController {
     @Autowired
     private ProfileService profileService;
 
-    /**
-     * Serves profile pictures from the application directory
-     * Anyone can download without authentication (for displaying in frontend)
-     * 
-     * @param filename The name of the profile picture file
-     * @return ResponseEntity containing the file bytes
-     */
+    @Operation(
+        summary = "Get profile picture by filename",
+        description = "Serves a profile picture file by its filename. No authentication required — used by frontend to display images. Cached for 1 hour"
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Image file returned"),
+        @ApiResponse(responseCode = "403", description = "Directory traversal attempt detected"),
+        @ApiResponse(responseCode = "404", description = "File not found"),
+        @ApiResponse(responseCode = "500", description = "Error reading file")
+    })
     @GetMapping("/profile-pictures/{filename}")
-    public ResponseEntity<byte[]> getProfilePicture(@PathVariable String filename) {
+    public ResponseEntity<byte[]> getProfilePicture(
+            @Parameter(description = "Profile picture filename", required = true, example = "patient_1_profile.jpg")
+            @PathVariable String filename) {
         try {
-            // Security: Prevent directory traversal attacks
             if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
                 logger.warn("Attempted directory traversal attack with filename: {}", filename);
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
 
             byte[] imageData = profileService.getProfilePictureFile(filename);
-            
+
             if (imageData != null) {
                 HttpHeaders headers = new HttpHeaders();
-                
-                // Determine content type based on file extension
-                String contentType = "image/jpeg"; // default
+                String contentType = "image/jpeg";
                 if (filename.toLowerCase().endsWith(".png")) {
                     contentType = "image/png";
                 } else if (filename.toLowerCase().endsWith(".gif")) {
@@ -55,11 +64,9 @@ public class FileController {
                 } else if (filename.toLowerCase().endsWith(".webp")) {
                     contentType = "image/webp";
                 }
-                
                 headers.setContentType(MediaType.parseMediaType(contentType));
                 headers.setContentLength(imageData.length);
-                headers.setCacheControl("max-age=3600"); // Cache for 1 hour
-                
+                headers.setCacheControl("max-age=3600");
                 logger.info("Successfully served profile picture: {}", filename);
                 return new ResponseEntity<>(imageData, headers, HttpStatus.OK);
             } else {
