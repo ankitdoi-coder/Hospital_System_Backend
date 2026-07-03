@@ -18,7 +18,8 @@ A production-ready, secure, and scalable RESTful API for a **Smart Healthcare Ap
 | **Password Reset Flow** | Forgot-password → token generation → reset-password via secure token |
 | **Billing & Revenue Module** | Appointments auto-generate billing records; Admin can view daily/monthly revenue stats |
 | **File Management** | Profile picture upload/retrieval via dedicated file controller |
-| **Notification Entity** | Foundation for in-app notifications (NotificationEntity, NotificationRepo) |
+| **Real-time Appointment Notifications** | Dual-channel notifications (in-app + email) for appointment creation & status tracking; includes time & reason details |
+| **Notification Entity** | In-app notification system with read/unread tracking and multi-type support (Appointment, Prescription, Payment, Registration) |
 | **Swagger / OpenAPI Docs** | Auto-generated interactive API docs via SpringDoc OpenAPI 2.5 |
 | **CORS Configured** | Whitelisted for React frontend at `localhost:5173` and `localhost:3000` |
 | **Stateless Sessions** | `SessionCreationPolicy.STATELESS` — no server-side session state |
@@ -229,7 +230,7 @@ Validation failures are caught by the Global Exception Handler and returned as s
 |---|---|---|
 | GET | `/profile` | View own doctor profile |
 | GET | `/appointments/my` | View all own appointments |
-| PUT | `/appointments/{id}/status` | Update appointment status |
+| PUT | `/appointments/{id}/status` | Update appointment status (triggers in-app + email notifications) |
 | GET | `/patients` | View all own patients |
 | POST | `/prescription` | Create a prescription |
 | GET | `/prescriptions` | View all own prescriptions |
@@ -245,6 +246,14 @@ Validation failures are caught by the Global Exception Handler and returned as s
 | PUT | `/billing/{id}/status` | Update a billing record's status |
 | GET | `/revenue/daily` | Get today's total revenue |
 | GET | `/revenue/monthly` | Get current month's total revenue |
+
+### 🔔 Notifications — `/api/notifications` _(ROLE_PATIENT / ROLE_DOCTOR)_
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/my` | Get all notifications for logged-in user (newest first) |
+| GET | `/unread-count` | Get count of unread notifications (for UI badge) |
+| PUT | `/{id}/read` | Mark a specific notification as read |
+| PUT | `/mark-all-read` | Mark all unread notifications as read |
 
 ---
 
@@ -322,7 +331,51 @@ Server starts at `http://localhost:8080`
 
 ---
 
-## 👀 For Reviewers
+## � Real-time Appointment Notifications
+
+The system sends **dual-channel notifications** (in-app + email) for all key appointment events. Notifications include appointment time and reason details for full context.
+
+### Appointment Creation Notification
+When a patient books an appointment:
+
+**In-App Notification** (stored in database)
+- Sent to: Patient & Doctor
+- Message: "Your Appointment Booked with Doctor: [Name]" (Patient) / "You have new Appointment from Patient: [Name]" (Doctor)
+- Type: `APPOINTMENT`
+- Read/Unread tracking enabled
+
+**Email Notification** (via JavaMailSender)
+- **Patient receives**: Appointment confirmation with doctor name, date, and gratitude message
+- **Doctor receives**: Appointment alert with patient name, scheduled date, and dashboard reminder
+- Both emails include appointment time (`LocalTime`) and reason for visit details
+
+### Appointment Status Update Notification
+When a doctor updates the appointment status (SCHEDULED → COMPLETED / CANCELED, etc.):
+
+**In-App Notification** (to patient)
+- Message: "Your appointment status has been updated to: [STATUS] by Dr. [Name]"
+- Type: `APPOINTMENT`
+
+**Email Notification** (to patient)
+- Subject: "Appointment Status Update"
+- Contains: Appointment date, doctor name, new status, and dashboard link
+
+### Notification Management API
+Patients and doctors can:
+- Retrieve all notifications sorted by creation date (newest first)
+- Check unread notification count (for UI bell badge)
+- Mark individual notifications as read
+- Mark all notifications as read in one call
+
+### Notification Types
+- `APPOINTMENT` — Appointment booking and status changes
+- `PRESCRIPTION` — Prescription-related (extensible for future use)
+- `PAYMENT` — Payment status updates (extensible for future use)
+- `REGISTRATION` — Account registration events (extensible for future use)
+
+---
+
+## �👀 For Reviewers
 
 This project was built to demonstrate practical, production-grade backend engineering rather than tutorial-level CRUD:
 
