@@ -18,7 +18,6 @@ public class PrescriptionDTO {
     private Long appointmentId;
 
     @Schema(description = "Patient ID — required", example = "2")
-    @NotNull(message = "Patient ID cannot be null")
     private Long patientId;
 
     @Schema(description = "Patient first name", example = "John")
