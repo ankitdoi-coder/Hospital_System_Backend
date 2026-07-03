@@ -1,6 +1,26 @@
+<div align="center">
+
 # 🏥 Smart Healthcare System — Backend
 
-A production-ready, secure, and scalable RESTful API for a **Smart Healthcare Appointment & Records System**, built with **Java 17 + Spring Boot 3.5**. Implements real-world engineering practices including JWT-based auth, role-based access control, centralized exception handling, request validation, OAuth2 social login, **Razorpay payment gateway integration**, billing management, file uploads, and automated API documentation.
+**A production-ready, secure, and scalable RESTful API** for a **Smart Healthcare Appointment & Records System**, built with **Java 17 + Spring Boot 3.5**.
+Implements real-world engineering practices including JWT-based auth, role-based access control, centralized exception handling, request validation, OAuth2 social login, **Razorpay payment gateway integration**, billing management, file uploads, and automated API documentation.
+
+[![Java](https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://openjdk.org/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.7-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![Spring Security](https://img.shields.io/badge/Spring%20Security-JWT-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white)](https://spring.io/projects/spring-security)
+[![MySQL](https://img.shields.io/badge/MySQL-8.3-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![Maven](https://img.shields.io/badge/Maven-3.x-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)](https://maven.apache.org/)
+[![Swagger](https://img.shields.io/badge/API%20Docs-Swagger%2FOpenAPI-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)](https://swagger.io/)
+[![Razorpay](https://img.shields.io/badge/Payments-Razorpay-0C2451?style=for-the-badge&logo=razorpay&logoColor=white)](https://razorpay.com/)
+
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](#)
+[![Build](https://img.shields.io/badge/Build-Passing-brightgreen.svg?style=flat-square)](#)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](#)
+[![Made with Java](https://img.shields.io/badge/Made%20with-Java%20Full%20Stack-orange.svg?style=flat-square)](#)
+
+**Frontend Repository:** [🔗 HealthCare-Frontend](https://github.com/ankitdoi-coder/HealthCare-Frontend) — React 19 | Vite | Redux Toolkit | Tailwind CSS | Razorpay Checkout
+
+</div>
 
 ---
 
@@ -8,21 +28,21 @@ A production-ready, secure, and scalable RESTful API for a **Smart Healthcare Ap
 
 | Feature | Details |
 |---|---|
-| **JWT Auth + Role-Based Access** | Stateless authentication with role-scoped endpoints (ADMIN / DOCTOR / PATIENT) |
-| **Email OTP Verification** | 6-digit OTP sent via email before registration; 10-minute expiry, single-use, auto-cleared on resend |
-| **Google OAuth2 Social Login** | Patients and doctors can sign in with Google via Spring OAuth2 client |
-| **Razorpay Payment Gateway** | Real, verified online payments for appointment billing — UPI, Cards & Netbanking, with server-side signature verification |
-| **Global Exception Handler** | `@RestControllerAdvice` catches all exceptions — validation, auth, not-found, duplicates — and returns consistent JSON error responses with timestamp |
-| **Bean Validation** | `@Valid` + Jakarta Validation annotations (`@NotNull`, `@NotBlank`, `@Email`, `@Digits`) on all request DTOs |
-| **Doctor Approval Workflow** | Doctors register but are locked out until an Admin approves their account |
-| **Password Reset Flow** | Forgot-password → token generation → reset-password via secure token |
-| **Billing & Revenue Module** | Appointments auto-generate billing records; Admin can view daily/monthly revenue stats |
-| **File Management** | Profile picture upload/retrieval via dedicated file controller |
-| **Real-time Appointment Notifications** | Dual-channel notifications (in-app + email) for appointment creation & status tracking; includes time & reason details |
-| **Notification Entity** | In-app notification system with read/unread tracking and multi-type support (Appointment, Prescription, Payment, Registration) |
-| **Swagger / OpenAPI Docs** | Auto-generated interactive API docs via SpringDoc OpenAPI 2.5 |
-| **CORS Configured** | Whitelisted for React frontend at `localhost:5173` and `localhost:3000` |
-| **Stateless Sessions** | `SessionCreationPolicy.STATELESS` — no server-side session state |
+| 🔐 **JWT Auth + Role-Based Access** | Stateless authentication with role-scoped endpoints (ADMIN / DOCTOR / PATIENT) |
+| 📧 **Email OTP Verification** | 6-digit OTP sent via email before registration; 10-minute expiry, single-use, auto-cleared on resend |
+| 🌐 **Google OAuth2 Social Login** | Patients and doctors can sign in with Google via Spring OAuth2 client |
+| 💳 **Razorpay Payment Gateway** | Real, verified online payments for appointment billing — UPI, Cards & Netbanking, with server-side signature verification |
+| 🛡️ **Global Exception Handler** | `@RestControllerAdvice` catches all exceptions — validation, auth, not-found, duplicates — and returns consistent JSON error responses with timestamp |
+| ✅ **Bean Validation** | `@Valid` + Jakarta Validation annotations (`@NotNull`, `@NotBlank`, `@Email`, `@Digits`) on all request DTOs |
+| 🩺 **Doctor Approval Workflow** | Doctors register but are locked out until an Admin approves their account |
+| 🔑 **Password Reset Flow** | Forgot-password → token generation → reset-password via secure token |
+| 💰 **Billing & Revenue Module** | Appointments auto-generate billing records; Admin can view daily/monthly revenue stats |
+| 📁 **File Management** | Profile picture upload/retrieval via dedicated file controller |
+| 🔔 **Real-time Appointment Notifications** | Dual-channel notifications (in-app + email) for appointment creation & status tracking; includes time & reason details |
+| 📬 **Notification Entity** | In-app notification system with read/unread tracking and multi-type support (Appointment, Prescription, Payment, Registration) |
+| 📚 **Swagger / OpenAPI Docs** | Auto-generated interactive API docs via SpringDoc OpenAPI 2.5 |
+| 🌍 **CORS Configured** | Whitelisted for React frontend at `localhost:5173` and `localhost:3000` |
+| ⚡ **Stateless Sessions** | `SessionCreationPolicy.STATELESS` — no server-side session state |
 
 ---
 
@@ -55,6 +75,24 @@ com.ankit.HealthCare_Backend/
 ---
 
 ## 🚀 Technology Stack
+
+<div align="center">
+
+![Java](https://img.shields.io/badge/Java-17-ED8B00?style=flat-square&logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.7-6DB33F?style=flat-square&logo=springboot&logoColor=white)
+![Spring Security](https://img.shields.io/badge/Spring%20Security-6.5.7-6DB33F?style=flat-square&logo=springsecurity&logoColor=white)
+![JWT](https://img.shields.io/badge/JWT-jjwt%200.11.5-000000?style=flat-square&logo=jsonwebtokens&logoColor=white)
+![OAuth2](https://img.shields.io/badge/OAuth2-Google-4285F4?style=flat-square&logo=google&logoColor=white)
+![Razorpay](https://img.shields.io/badge/Razorpay-Java%20SDK-0C2451?style=flat-square&logo=razorpay&logoColor=white)
+![JavaMail](https://img.shields.io/badge/Email-JavaMailSender-D14836?style=flat-square&logo=gmail&logoColor=white)
+![Hibernate](https://img.shields.io/badge/ORM-JPA%2FHibernate-59666C?style=flat-square&logo=hibernate&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-8.3.0-4479A1?style=flat-square&logo=mysql&logoColor=white)
+![Validation](https://img.shields.io/badge/Validation-Jakarta%20Bean-2396F3?style=flat-square&logo=hibernate&logoColor=white)
+![Swagger](https://img.shields.io/badge/API%20Docs-SpringDoc%20OpenAPI%202.5.0-85EA2D?style=flat-square&logo=swagger&logoColor=black)
+![Maven](https://img.shields.io/badge/Build-Maven-C71A36?style=flat-square&logo=apachemaven&logoColor=white)
+![Lombok](https://img.shields.io/badge/Utility-Lombok%201.18.32-BC0032?style=flat-square&logo=lombok&logoColor=white)
+
+</div>
 
 | Component | Technology | Version |
 |---|---|---|
@@ -95,7 +133,7 @@ Request → JwtFilter → Validate Token → Set SecurityContext → @PreAuthori
 
 The billing module integrates **Razorpay** end-to-end for appointment payments — not a mocked checkout, but a real gateway integration with proper order lifecycle and server-side trust boundaries.
 
-### What's Implemented
+### 📌 What's Implemented
 
 | Capability | Status |
 |---|---|
@@ -106,7 +144,7 @@ The billing module integrates **Razorpay** end-to-end for appointment payments �
 | Payment failure & checkout-dismissal handling | ✅ Implemented |
 | Revenue reporting (daily / monthly) | ✅ Implemented |
 
-### Why It's Built This Way
+### 🧠 Why It's Built This Way
 
 A naive integration trusts the frontend to say "payment succeeded." This one doesn't. The flow is:
 
@@ -121,7 +159,7 @@ A naive integration trusts the frontend to say "payment succeeded." This one doe
 
 This is the same trust model used by real fintech and healthtech platforms — the **backend is the single source of truth** for what counts as a successful payment, never the client.
 
-### Testing the Payment Flow (Test Mode)
+### 🧪 Testing the Payment Flow (Test Mode)
 
 Razorpay's Test Mode sandbox reproduces the entire checkout, OTP, and verification flow with zero real money movement — used to validate this integration end-to-end.
 
@@ -279,13 +317,13 @@ http://localhost:8080/swagger-ui/index.html
 
 ## ⚙️ Getting Started
 
-### Prerequisites
+### ✅ Prerequisites
 - Java 17+
 - Maven 3.x
 - MySQL 8.x
 - A Razorpay account (Test Mode keys are free — no business verification needed to start testing)
 
-### Setup
+### 🛠️ Setup
 
 ```bash
 git clone https://github.com/ankitdoi-coder/healthcare-backend.git
@@ -331,11 +369,11 @@ Server starts at `http://localhost:8080`
 
 ---
 
-## � Real-time Appointment Notifications
+## 🔔 Real-time Appointment Notifications
 
 The system sends **dual-channel notifications** (in-app + email) for all key appointment events. Notifications include appointment time and reason details for full context.
 
-### Appointment Creation Notification
+### 📅 Appointment Creation Notification
 When a patient books an appointment:
 
 **In-App Notification** (stored in database)
@@ -349,7 +387,7 @@ When a patient books an appointment:
 - **Doctor receives**: Appointment alert with patient name, scheduled date, and dashboard reminder
 - Both emails include appointment time (`LocalTime`) and reason for visit details
 
-### Appointment Status Update Notification
+### 🔄 Appointment Status Update Notification
 When a doctor updates the appointment status (SCHEDULED → COMPLETED / CANCELED, etc.):
 
 **In-App Notification** (to patient)
@@ -360,14 +398,14 @@ When a doctor updates the appointment status (SCHEDULED → COMPLETED / CANCELED
 - Subject: "Appointment Status Update"
 - Contains: Appointment date, doctor name, new status, and dashboard link
 
-### Notification Management API
+### 📬 Notification Management API
 Patients and doctors can:
 - Retrieve all notifications sorted by creation date (newest first)
 - Check unread notification count (for UI bell badge)
 - Mark individual notifications as read
 - Mark all notifications as read in one call
 
-### Notification Types
+### 🏷️ Notification Types
 - `APPOINTMENT` — Appointment booking and status changes
 - `PRESCRIPTION` — Prescription-related (extensible for future use)
 - `PAYMENT` — Payment status updates (extensible for future use)
@@ -375,12 +413,26 @@ Patients and doctors can:
 
 ---
 
-## �👀 For Reviewers
+## 👀 For Reviewers
 
 This project was built to demonstrate practical, production-grade backend engineering rather than tutorial-level CRUD:
 
-- **Security-first payment handling** — billing status is never trusted from the client; it's gated behind server-side HMAC signature verification, mirroring real fintech/healthtech systems.
-- **Stateless, role-scoped JWT auth** with a proper OAuth2 social login path alongside it.
-- **Consistent error contracts** across the entire API via a single global exception handler.
-- **Domain-driven package structure** that scales cleanly as features are added, rather than a flat MVC layout.
-- **Real third-party integration experience** with Razorpay's order lifecycle (create → checkout → verify), not a simulated or mocked payment button.
+- 🔐 **Security-first payment handling** — billing status is never trusted from the client; it's gated behind server-side HMAC signature verification, mirroring real fintech/healthtech systems.
+- 🪪 **Stateless, role-scoped JWT auth** with a proper OAuth2 social login path alongside it.
+- 🧩 **Consistent error contracts** across the entire API via a single global exception handler.
+- 🏗️ **Domain-driven package structure** that scales cleanly as features are added, rather than a flat MVC layout.
+- 🔗 **Real third-party integration experience** with Razorpay's order lifecycle (create → checkout → verify), not a simulated or mocked payment button.
+
+---
+
+<div align="center">
+
+### 👤 Author
+
+**Ankit** — Java Full Stack Developer
+
+[![GitHub](https://img.shields.io/badge/GitHub-ankitdoi--coder-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/ankitdoi-coder)
+
+💼 *Open to Java Full Stack / Backend / Frontend opportunities. Feel free to connect!*
+
+</div>
