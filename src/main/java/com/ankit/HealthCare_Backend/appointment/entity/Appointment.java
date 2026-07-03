@@ -1,6 +1,7 @@
 package com.ankit.HealthCare_Backend.appointment.entity;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 import com.ankit.HealthCare_Backend.usermanagement.doctor.entity.Doctor;
 import com.ankit.HealthCare_Backend.usermanagement.patient.entity.Patient;
@@ -43,7 +44,11 @@ public class Appointment {
     @Column(name = "appointment_date", nullable = false)
     private LocalDate appointmentDate;
 
-    
+    @Column(name = "appointment_time")
+    private LocalTime appointmentTime;
+
+    @Column(name = "reason_for_visit", length = 500)
+    private String reasonForVisit;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)

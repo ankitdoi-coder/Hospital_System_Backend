@@ -34,6 +34,8 @@ public class AuthenticationController {
     private final AuthService authService;
     private final EmailOtpService emailOtpService;
 
+
+    
     @Operation(summary = "Send OTP to email", description = "Sends a 6-digit OTP to the given email before registration")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "OTP sent successfully"),

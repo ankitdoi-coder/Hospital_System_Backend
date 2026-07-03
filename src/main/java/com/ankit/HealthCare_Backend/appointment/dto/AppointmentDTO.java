@@ -2,9 +2,9 @@ package com.ankit.HealthCare_Backend.appointment.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import com.ankit.HealthCare_Backend.core.enums.AppointmentStatusEnum;
 import com.ankit.HealthCare_Backend.core.enums.BillingStatus;
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
@@ -37,6 +37,12 @@ public class AppointmentDTO {
 
     @Schema(description = "Appointment date — required when booking", example = "2025-08-20")
     private LocalDate appointmentDate;
+
+    @Schema(description = "Appointment time — required when booking", example = "10:30:00")
+    private LocalTime appointmentTime;
+
+    @Schema(description = "Reason for visit", example = "Chest pain and shortness of breath")
+    private String reasonForVisit;
 
     @Schema(description = "Appointment status", example = "PENDING")
     private AppointmentStatusEnum status;

@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -44,6 +46,8 @@ public class DoctorServiceImpl implements DoctorService {
 
     @Autowired
     private NotificationService notiService;
+    @Autowired
+    private JavaMailSender mailSender;
 
 
     //Get upcoming appoinments of doctor
@@ -155,6 +159,8 @@ public class DoctorServiceImpl implements DoctorService {
     dto.setPatientLastName(appointment.getPatient().getLastName());
     dto.setDoctorId(appointment.getDoctor().getId());
     dto.setAppointmentDate(appointment.getAppointmentDate());
+    dto.setAppointmentTime(appointment.getAppointmentTime());
+    dto.setReasonForVisit(appointment.getReasonForVisit());
     dto.setStatus(appointment.getStatus());
     return dto;
 }
@@ -192,13 +198,25 @@ public class DoctorServiceImpl implements DoctorService {
         appointment.setStatus(status.getStatus());
         Appointment savedAppointment = appointmentRepo.save(appointment); 
 
-        //create a notification 
+        // in-app notification to patient
         notiService.createNotification(
-        appointment.getPatient().getUser().getId(),
-        "Your appointment status has been updated to: " + status.getStatus() + " by Dr. " + appointment.getDoctor().getFirstName() + " " + appointment.getDoctor().getLastName(),
-        appointment.getDoctor().getUser().getId(),
-        NotificationType.APPOINTMENT);
-        return  convertToAppointmentDto(savedAppointment);
+            appointment.getPatient().getUser().getId(),
+            "Your appointment status has been updated to: " + status.getStatus() + " by Dr. " + appointment.getDoctor().getFirstName() + " " + appointment.getDoctor().getLastName(),
+            appointment.getDoctor().getUser().getId(),
+            NotificationType.APPOINTMENT);
+
+        // email notification to patient
+        SimpleMailMessage mail = new SimpleMailMessage();
+        mail.setTo(appointment.getPatient().getUser().getEmail());
+        mail.setSubject("Appointment Status Update");
+        mail.setText("Dear " + appointment.getPatient().getFirstName() + " " + appointment.getPatient().getLastName()
+                + ",\n\nYour appointment on " + appointment.getAppointmentDate()
+                + " with Dr. " + appointment.getDoctor().getFirstName() + " " + appointment.getDoctor().getLastName()
+                + " has been updated to: " + status.getStatus()
+                + ".\n\nPlease check your dashboard for more details.");
+        mailSender.send(mail);
+
+        return convertToAppointmentDto(savedAppointment);
     }
 
 

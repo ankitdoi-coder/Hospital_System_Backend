@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -31,11 +33,16 @@ import com.ankit.HealthCare_Backend.Exception.ResourceNotFoundException;
 import com.ankit.HealthCare_Backend.Exception.UnauthorizedException;
 import com.ankit.HealthCare_Backend.usermanagement.user.entity.User;
 import com.ankit.HealthCare_Backend.usermanagement.user.repository.UserRepository;
+
+import lombok.extern.slf4j.Slf4j;
+
 import com.ankit.HealthCare_Backend.Notification.NotificationService;
 import com.ankit.HealthCare_Backend.Notification.NotificationType;
 
 
+
 @Service
+@Slf4j
 public class PatientServiceImpl implements PatientService {
 
     @Autowired
@@ -57,12 +64,10 @@ public class PatientServiceImpl implements PatientService {
     private BillingRepository billingRepo;
     @Autowired
     private NotificationService notiService;
+    @Autowired
+    private JavaMailSender mailSender;
 
-
-
-
-
-    //Get All Doctors
+    // Get All Doctors
     @Override
     public List<DoctorDTO> getAllDoctors() {
         return doctorRepo.findAll()
@@ -95,13 +100,15 @@ public class PatientServiceImpl implements PatientService {
         dto.setDoctorLastName(appointment.getDoctor().getLastName());
         dto.setDoctorSpecialty(appointment.getDoctor().getSpecialty());
         dto.setAppointmentDate(appointment.getAppointmentDate());
+        dto.setAppointmentTime(appointment.getAppointmentTime());
+        dto.setReasonForVisit(appointment.getReasonForVisit());
         dto.setStatus(appointment.getStatus());
-        
+
         // Get billing info
         Billing billing = billingRepo.findAll().stream()
                 .filter(b -> b.getAppointment_id().getId().equals(appointment.getId()))
                 .findFirst().orElse(null);
-        
+
         if (billing != null) {
             dto.setBillingStatus(billing.getBilling_status());
             dto.setAmount(billing.getAmount());
@@ -109,54 +116,85 @@ public class PatientServiceImpl implements PatientService {
             dto.setBillingStatus(BillingStatus.UNPAID);
             dto.setAmount(500);
         }
-        
+
         return dto;
     }
-
-
-
-
 
     // newAppointment
     @Override
     @Transactional
     public AppointmentDTO newAppointment(AppointmentDTO appointmentDTO, String patientEmail) {
-        // 1. Find patient by user  email
+        // 1. Find patient by user email
         User user = userRepo.findByEmail(patientEmail);
         if (user == null) {
             throw new ResourceNotFoundException("User not found: " + patientEmail);
         }
-        
+
         Patient patient = patientRepo.findByUserId(user.getId());
         if (patient == null) {
             throw new ResourceNotFoundException("No patient profile found for user: " + patientEmail);
         }
 
         Doctor doctor = doctorRepo.findById(appointmentDTO.getDoctorId())
-                .orElseThrow(() -> new ResourceNotFoundException("Doctor not found with id: " + appointmentDTO.getDoctorId()));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Doctor not found with id: " + appointmentDTO.getDoctorId()));
 
         // 2. Create the appointment entity
         Appointment newAppointment = new Appointment();
         newAppointment.setPatient(patient);
         newAppointment.setDoctor(doctor);
         newAppointment.setAppointmentDate(appointmentDTO.getAppointmentDate());
+        newAppointment.setAppointmentTime(appointmentDTO.getAppointmentTime());
+        newAppointment.setReasonForVisit(appointmentDTO.getReasonForVisit());
         newAppointment.setStatus(AppointmentStatusEnum.PENDING);
 
         // 3. Save the new appointment
         Appointment savedAppointment = appointmentRepo.save(newAppointment);
 
+
+
+        
         // 4.create new Notification for patient
-        notiService.createNotification(user.getId(),"Your Appointment Booked with Doctor :"+doctor.getFirstName()+doctor.getLastName(),doctor.getUser().getId(),NotificationType.APPOINTMENT);
-        notiService.createNotification(doctor.getUser().getId(), "You have new Appointment from Patient :"+patient.getFirstName()+patient.getLastName(), user.getId(),NotificationType.APPOINTMENT);
+
+        // we fire 2 notification here
+        // first for the Patient in Application and Email as well
+
+        notiService.createNotification(user.getId(),
+                "Your Appointment Booked with Doctor :" + doctor.getFirstName() + doctor.getLastName(),
+                doctor.getUser().getId(), NotificationType.APPOINTMENT);
+        log.info("In Application Notification is created for :-" + user.getEmail());
+        log.info("Sending Notification on the Email as well" + user.getEmail());
+
+        SimpleMailMessage message1 = new SimpleMailMessage();
+        message1.setTo(user.getEmail());
+        message1.setSubject("Appointment Confirmation");
+        message1.setText(
+                "Dear " + patient.getFirstName() + " " + patient.getLastName() + ",\n\nYour appointment with Dr. "
+                        + doctor.getFirstName() + " " + doctor.getLastName() + " has been booked for "
+                        + appointmentDTO.getAppointmentDate() + ".\n\nThank you for choosing our healthcare services.");
+        mailSender.send(message1);
+        log.info("Email Sent Successfully to the Patient"+user.getEmail());
+
+        // Second for the Doctor
+        notiService.createNotification(doctor.getUser().getId(),
+                "You have new Appointment from Patient :" + patient.getFirstName() + patient.getLastName(),
+                user.getId(), NotificationType.APPOINTMENT);
         
+        SimpleMailMessage message2=new SimpleMailMessage();
+        message2.setTo(doctor.getUser().getEmail());
+        message2.setSubject("New Appointment");
+        message2.setText(
+                "Dear Dr. " + doctor.getFirstName() + " " + doctor.getLastName() + ",\n\nYou have a new appointment with Patient "
+                        + patient.getFirstName() + " " + patient.getLastName() + " scheduled for "
+                        + appointmentDTO.getAppointmentDate() + ".\n\nPlease check your dashboard for more details.");
+                        
+        mailSender.send(message2);
         
+        log.info("Email Sent Successfully to the Doctor"+doctor.getUser().getEmail());
 
         // 5. Convert back to DTO
         return convertToAppointmentDto(savedAppointment);
     }
-
-
-
 
     // My appointments
     @Override
@@ -186,8 +224,7 @@ public class PatientServiceImpl implements PatientService {
                 .collect(Collectors.toList());
     }
 
-
-    //get Prescription
+    // get Prescription
     @Override
     public List<PrescriptionDTO> getMyPrescriptions() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -223,9 +260,7 @@ public class PatientServiceImpl implements PatientService {
         return dto;
     }
 
-
-
-    //get profile info
+    // get profile info
     @Override
     public PatientDTO getMyProfile() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -247,20 +282,17 @@ public class PatientServiceImpl implements PatientService {
         return convertToPatientDto(patient);
     }
 
-
-
-
-    //Make Payment 
+    // Make Payment
     @Override
     @Transactional
     public void makePayment(Long appointmentId) {
         Appointment appointment = appointmentRepo.findById(appointmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + appointmentId));
-        
+
         Billing billing = billingRepo.findAll().stream()
                 .filter(b -> b.getAppointment_id().getId().equals(appointmentId))
                 .findFirst().orElse(null);
-        
+
         if (billing == null) {
             billing = new Billing();
             billing.setAppointment_id(appointment);
@@ -269,7 +301,7 @@ public class PatientServiceImpl implements PatientService {
         } else {
             billing.setBilling_status(BillingStatus.PAID);
         }
-        
+
         billingRepo.save(billing);
     }
 
@@ -278,10 +310,10 @@ public class PatientServiceImpl implements PatientService {
     public void cancelAppointment(Long appointmentId) {
         Appointment appointment = appointmentRepo.findById(appointmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + appointmentId));
-        
+
         // Delete the appointment
         appointmentRepo.delete(appointment);
-        
+
         // Also delete associated billing if exists
         billingRepo.findAll().stream()
                 .filter(b -> b.getAppointment_id().getId().equals(appointmentId))
