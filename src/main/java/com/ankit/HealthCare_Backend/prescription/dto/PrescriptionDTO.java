@@ -26,6 +26,12 @@ public class PrescriptionDTO {
     @Schema(description = "Patient last name", example = "Doe")
     private String patientLastName;
 
+    @Schema(description = "Doctor first name", example = "Sarah")
+    private String doctorFirstName;
+
+    @Schema(description = "Doctor last name", example = "Smith")
+    private String doctorLastName;
+
     @Schema(description = "Medication details prescribed by the doctor", example = "Paracetamol 500mg, Amoxicillin 250mg")
     @NotBlank(message = "Medication details cannot be blank")
     private String medicationDetails;

@@ -52,15 +52,12 @@ public class AuthServiceImpl implements AuthService {
     private final UserDetailsService customUserDetailsService;
     private final JwtService jwtService;
 
+    //Login Service
     @Override
     public LoginResponseDTO login(LoginRequestDTO loginRequest) {
-        try {
-            authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
-            );
-        } catch (BadCredentialsException e) {
-            throw new UnauthorizedException("Invalid email or password");
-        }
+        authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
+        );
 
         UserDetails userDetails = customUserDetailsService.loadUserByUsername(loginRequest.getEmail());
 
@@ -79,6 +76,8 @@ public class AuthServiceImpl implements AuthService {
         return new LoginResponseDTO(jwt, "Login successful");
     }
 
+
+    //Register Service
     @Override
     @Transactional
     public UserResponseDTO registerUser(RegisterRequestDTO registerRequest) {
@@ -148,6 +147,8 @@ public class AuthServiceImpl implements AuthService {
         return response;
     }
 
+
+    //Forgot Password Service
     @Override
     public String forgotPassword(String email) {
         log.info("finding user by email"+email);

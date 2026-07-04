@@ -182,10 +182,12 @@ public class DoctorServiceImpl implements DoctorService {
 
     private PrescriptionDTO convertToPrescriptionDto(Prescription prescription) {
         PrescriptionDTO dto = new PrescriptionDTO();
-        dto.setId(prescription.getId()); // This will now have a value
-        dto.setAppointmentId(prescription.getAppointment().getId()); // Get the ID from the nested object
+        dto.setId(prescription.getId());
+        dto.setAppointmentId(prescription.getAppointment().getId());
         dto.setDosages(prescription.getDosages());
         dto.setMedicationDetails(prescription.getMedicationDetails());
+        dto.setDoctorFirstName(prescription.getAppointment().getDoctor().getFirstName());
+        dto.setDoctorLastName(prescription.getAppointment().getDoctor().getLastName());
         return dto;
     }
 
@@ -255,6 +257,8 @@ public class DoctorServiceImpl implements DoctorService {
         dto.setPatientId(prescription.getAppointment().getPatient().getId());
         dto.setPatientFirstName(prescription.getAppointment().getPatient().getFirstName());
         dto.setPatientLastName(prescription.getAppointment().getPatient().getLastName());
+        dto.setDoctorFirstName(prescription.getAppointment().getDoctor().getFirstName());
+        dto.setDoctorLastName(prescription.getAppointment().getDoctor().getLastName());
         dto.setDosages(prescription.getDosages());
         dto.setMedicationDetails(prescription.getMedicationDetails());
         dto.setCreatedAt(prescription.getCreatedAt());

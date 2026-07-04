@@ -255,8 +255,14 @@ public class PatientServiceImpl implements PatientService {
         PrescriptionDTO dto = new PrescriptionDTO();
         dto.setId(prescription.getId());
         dto.setAppointmentId(prescription.getAppointment().getId());
+        dto.setPatientId(prescription.getAppointment().getPatient().getId());
+        dto.setPatientFirstName(prescription.getAppointment().getPatient().getFirstName());
+        dto.setPatientLastName(prescription.getAppointment().getPatient().getLastName());
+        dto.setDoctorFirstName(prescription.getAppointment().getDoctor().getFirstName());
+        dto.setDoctorLastName(prescription.getAppointment().getDoctor().getLastName());
         dto.setMedicationDetails(prescription.getMedicationDetails());
         dto.setDosages(prescription.getDosages());
+        dto.setCreatedAt(prescription.getCreatedAt());
         return dto;
     }
 
