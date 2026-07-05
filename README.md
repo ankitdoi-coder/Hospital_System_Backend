@@ -3,7 +3,7 @@
 # 🏥 Smart Healthcare System — Backend
 
 **A production-ready, secure, and scalable RESTful API** for a **Smart Healthcare Appointment & Records System**, built with **Java 17 + Spring Boot 3.5**.
-Implements real-world engineering practices including JWT-based auth, role-based access control, centralized exception handling, request validation, OAuth2 social login, **Razorpay payment gateway integration**, billing management, file uploads, and automated API documentation.
+Implements real-world engineering practices including JWT-based auth, role-based access control, centralized exception handling, request validation, OAuth2 social login, **Razorpay payment gateway integration**, billing management, **Cloudinary-backed cloud file storage**, and automated API documentation.
 
 [![Java](https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.7-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
@@ -12,6 +12,7 @@ Implements real-world engineering practices including JWT-based auth, role-based
 [![Maven](https://img.shields.io/badge/Maven-3.x-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)](https://maven.apache.org/)
 [![Swagger](https://img.shields.io/badge/API%20Docs-Swagger%2FOpenAPI-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)](https://swagger.io/)
 [![Razorpay](https://img.shields.io/badge/Payments-Razorpay-0C2451?style=for-the-badge&logo=razorpay&logoColor=white)](https://razorpay.com/)
+[![Cloudinary](https://img.shields.io/badge/Media%20Storage-Cloudinary-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white)](https://cloudinary.com/)
 
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](#)
 [![Build](https://img.shields.io/badge/Build-Passing-brightgreen.svg?style=flat-square)](#)
@@ -24,6 +25,24 @@ Implements real-world engineering practices including JWT-based auth, role-based
 
 ---
 
+## 🎥 Video Walkthroughs (Explained by Me)
+
+I've recorded short walkthroughs breaking down some of the trickier features and bugs in this project — not just showing that it works, but explaining the *reasoning* behind the implementation.
+
+| # | Topic | Link |
+|---|---|---|
+| 1 | 🔔 Notification Feature — Overview | [▶ Watch](https://youtu.be/mJa_I60yNYk?si=jBbiUTr2HLxPM4bt) |
+| 2 | 🧩 Notification Feature — Service & Repository Layer | [▶ Watch](https://youtu.be/Rj3RG-A-wn0?si=nwBGXUSvE3xxUsSR) |
+| 3 | ✅ In-App Notification Feature — Completed Walkthrough | [▶ Watch](https://youtu.be/fs9LxIsQvME?si=rK6OaHf02rvm3U3-) |
+| 4 | 🐞 JWT Authentication Bug Fix — Root Cause & Resolution | [▶ Watch](https://youtu.be/uyvSxrhkSR8?si=9AJxx--k1zeFRAHy) |
+| 5 | ✅ Bean Validation & Global Exception Handler | [▶ Watch](https://youtu.be/j93XCeoUj28?si=NL4z7jZyLpFrPAt6) |
+| 6 | 📧 OTP-Based Registration Flow | [▶ Watch](https://youtu.be/8FZdOrmtN2A?si=ZC2RkhXvxhLi4Wuo) |
+| 7 | 🔑 OTP Email-Based Password Reset | [▶ Watch](https://youtu.be/1MH0xzRQ0OM?si=_MpSCJ_vM0tZSQea) |
+
+> 💡 These videos are meant to give reviewers a look into my thought process — how I debug, design, and reason through real backend problems, not just the final code.
+
+---
+
 ## ✨ Key Highlights (What Makes This Stand Out)
 
 | Feature | Details |
@@ -32,16 +51,17 @@ Implements real-world engineering practices including JWT-based auth, role-based
 | 📧 **Email OTP Verification** | 6-digit OTP sent via email before registration; 10-minute expiry, single-use, auto-cleared on resend |
 | 🌐 **Google OAuth2 Social Login** | Patients and doctors can sign in with Google via Spring OAuth2 client |
 | 💳 **Razorpay Payment Gateway** | Real, verified online payments for appointment billing — UPI, Cards & Netbanking, with server-side signature verification |
+| ☁️ **Cloudinary Cloud Media Storage** | Profile pictures uploaded via multipart requests are validated, streamed, and persisted to Cloudinary — no local disk dependency, fully production-portable |
 | 🛡️ **Global Exception Handler** | `@RestControllerAdvice` catches all exceptions — validation, auth, not-found, duplicates — and returns consistent JSON error responses with timestamp |
 | ✅ **Bean Validation** | `@Valid` + Jakarta Validation annotations (`@NotNull`, `@NotBlank`, `@Email`, `@Digits`) on all request DTOs |
 | 🩺 **Doctor Approval Workflow** | Doctors register but are locked out until an Admin approves their account |
 | 🔑 **Password Reset Flow** | Forgot-password → token generation → reset-password via secure token |
 | 💰 **Billing & Revenue Module** | Appointments auto-generate billing records; Admin can view daily/monthly revenue stats |
-| 📁 **File Management** | Profile picture upload/retrieval via dedicated file controller |
+| 📁 **Role-Aware File Management** | Multipart profile picture upload/retrieval shared across PATIENT and DOCTOR roles, backed by Cloudinary |
 | 🔔 **Real-time Appointment Notifications** | Dual-channel notifications (in-app + email) for appointment creation & status tracking; includes time & reason details |
 | 📬 **Notification Entity** | In-app notification system with read/unread tracking and multi-type support (Appointment, Prescription, Payment, Registration) |
 | 📚 **Swagger / OpenAPI Docs** | Auto-generated interactive API docs via SpringDoc OpenAPI 2.5 |
-| 🌍 **CORS Configured** | Whitelisted for React frontend at `localhost:5173` and `localhost:3000` |
+| 🌍 **CORS Configured** | Whitelisted for React frontend at `localhost:5173` and `localhost:3000` via `allowedOriginPatterns`, safely combined with credentialed requests |
 | ⚡ **Stateless Sessions** | `SessionCreationPolicy.STATELESS` — no server-side session state |
 
 ---
@@ -66,7 +86,7 @@ com.ankit.HealthCare_Backend/
 ├── communication/        # Contact Us feature
 ├── core/                 # Shared enums (AppointmentStatus, BillingStatus), Role entity
 ├── Exception/            # GlobalExceptionHandler + custom exceptions
-├── filemanagement/       # Profile picture upload/retrieval
+├── filemanagement/       # Profile picture upload/retrieval, Cloudinary integration
 ├── Notification/         # Notification entity & repository
 ├── prescription/         # Doctor prescriptions
 └── usermanagement/       # Admin, Doctor, Patient, User, Profile sub-modules
@@ -84,6 +104,7 @@ com.ankit.HealthCare_Backend/
 ![JWT](https://img.shields.io/badge/JWT-jjwt%200.11.5-000000?style=flat-square&logo=jsonwebtokens&logoColor=white)
 ![OAuth2](https://img.shields.io/badge/OAuth2-Google-4285F4?style=flat-square&logo=google&logoColor=white)
 ![Razorpay](https://img.shields.io/badge/Razorpay-Java%20SDK-0C2451?style=flat-square&logo=razorpay&logoColor=white)
+![Cloudinary](https://img.shields.io/badge/Cloudinary-Java%20SDK-3448C5?style=flat-square&logo=cloudinary&logoColor=white)
 ![JavaMail](https://img.shields.io/badge/Email-JavaMailSender-D14836?style=flat-square&logo=gmail&logoColor=white)
 ![Hibernate](https://img.shields.io/badge/ORM-JPA%2FHibernate-59666C?style=flat-square&logo=hibernate&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-8.3.0-4479A1?style=flat-square&logo=mysql&logoColor=white)
@@ -100,6 +121,7 @@ com.ankit.HealthCare_Backend/
 | Security | Spring Security + JWT (jjwt) | 6.5.7 / 0.11.5 |
 | Social Login | Spring OAuth2 Client (Google) | 6.5.7 |
 | Payment Gateway | Razorpay Java SDK | Latest stable |
+| Media Storage | Cloudinary Java SDK | Latest stable |
 | Email | Spring Boot Starter Mail (JavaMailSender) | 3.5.7 |
 | ORM | Spring Data JPA + Hibernate | 3.5.7 |
 | Database | MySQL (mysql-connector-j) | 8.3.0 |
@@ -121,11 +143,43 @@ Request → JwtFilter → Validate Token → Set SecurityContext → @PreAuthori
 2. **Login** — `POST /api/auth/login` returns a signed JWT; doctors blocked until approved
 3. **Google OAuth2** — `/oauth2/**` flow handled by `OAuth2LoginSuccessHandler`, redirects with token
 4. **JWT Filter** — `JwtFilter` intercepts every request, validates signature & expiry
-5. **Role Guards** — `/api/patient/**` → `ROLE_PATIENT`, `/api/doctor/**` → `ROLE_DOCTOR`, `/api/admin/**` → `ROLE_ADMIN`
+5. **Role Guards** — `/api/patient/**` → `ROLE_PATIENT`, `/api/doctor/**` → `ROLE_DOCTOR`, `/api/admin/**` → `ROLE_ADMIN`, `/api/profile/**` → `ROLE_PATIENT` **or** `ROLE_DOCTOR` via `hasAnyRole`
 6. **Email OTP** — `POST /api/auth/send-otp` sends a 6-digit OTP; `POST /api/auth/verify-otp` validates it before allowing registration
 7. **Password Reset** — Secure time-limited token flow via `POST /api/auth/forgot-password` → `POST /api/auth/reset-password`
 8. **BCrypt** — All passwords hashed with `BCryptPasswordEncoder`
 9. **Payment Signature Verification** — Every Razorpay payment is verified server-side via HMAC signature before billing status changes — the client can never self-report a payment as successful
+10. **Credential-Safe CORS** — `CorsConfigurationSource` uses `allowedOriginPatterns` (never a bare `"*"`) so credentialed requests (JWT-bearing) from the frontend are honored without violating the CORS spec
+
+---
+
+## ☁️ Cloudinary — Cloud-Based Profile Picture Management
+
+Profile pictures for both **Patients** and **Doctors** are uploaded directly to **Cloudinary** rather than local disk — meaning the API remains stateless and horizontally scalable (no shared filesystem needed across instances), and images are served from Cloudinary's CDN.
+
+### 📌 What's Implemented
+
+| Capability | Status |
+|---|---|
+| Multipart image upload (`multipart/form-data`) | ✅ Implemented |
+| Content-type validation — only `image/*` accepted | ✅ Implemented |
+| File size validation — 5MB max, rejected before upload | ✅ Implemented |
+| Direct stream-to-Cloudinary upload (no local temp storage) | ✅ Implemented |
+| Role-aware persistence — updates `Patient` or `Doctor` entity based on logged-in user's role | ✅ Implemented |
+| Returns CDN-backed image URL in response for immediate frontend use | ✅ Implemented |
+
+### 🧠 Upload Flow
+
+```
+1. Client sends multipart request  ──▶  POST /api/profile/upload-image  (field: profilePicture)
+2. JwtFilter authenticates          ──▶  Principal resolved to logged-in user
+3. ProfileService validates file    ──▶  content-type check + 5MB size check
+4. CloudinaryService.uploadImage()  ──▶  streams file directly to Cloudinary, returns secure URL
+5. Service resolves role            ──▶  PATIENT → Patient entity, DOCTOR → Doctor entity
+6. profilePicture column updated    ──▶  persisted via @Transactional save
+7. Response                         ──▶  { success, message, imageUrl }
+```
+
+Because the upload is wrapped in `@Transactional`, a failure at any stage (invalid file, Cloudinary error, DB save error) rolls back cleanly rather than leaving a partially-updated profile.
 
 ---
 
@@ -261,17 +315,23 @@ Validation failures are caught by the Global Exception Handler and returned as s
 | POST | `/payments/create-order` | Create a Razorpay order for an appointment |
 | POST | `/payments/verify` | Verify Razorpay payment signature and mark billing as `PAID` |
 | GET | `/prescriptions` | View personal prescriptions |
-| GET | `/profile` | View own patient profile |
+| GET | `/profile` | View own patient profile (includes `profilePicture` URL) |
 
 ### 👨‍⚕️ Doctor — `/api/doctor` _(ROLE_DOCTOR)_
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/profile` | View own doctor profile |
+| GET | `/profile` | View own doctor profile (includes `profilePicture` URL) |
 | GET | `/appointments/my` | View all own appointments |
 | PUT | `/appointments/{id}/status` | Update appointment status (triggers in-app + email notifications) |
 | GET | `/patients` | View all own patients |
 | POST | `/prescription` | Create a prescription |
 | GET | `/prescriptions` | View all own prescriptions |
+
+### 🖼️ Profile / File Management — `/api/profile` _(ROLE_PATIENT or ROLE_DOCTOR)_
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/upload-image` | Upload a profile picture (`multipart/form-data`, field: `profilePicture`) — validated, streamed to Cloudinary, and linked to the caller's Patient or Doctor record |
+| DELETE | `/delete-image` | Remove the current profile picture |
 
 ### 🛠️ Admin — `/api/admin` _(ROLE_ADMIN)_
 | Method | Endpoint | Description |
@@ -299,9 +359,11 @@ Validation failures are caught by the Global Exception Handler and returned as s
 
 ![ER Diagram](https://raw.githubusercontent.com/ankitdoi-coder/HealthCare-Backend/main/Requirements%20&%20Architecture/04_ERD_DB.jpg)
 
-Core entities: `User`, `Role`, `Patient`, `Doctor`, `Admin`, `Appointment`, `Prescription`, `Billing`, `ProfilePicture`, `ContactUs`, `Notification`, `PasswordResetToken`
+Core entities: `User`, `Role`, `Patient`, `Doctor`, `Admin`, `Appointment`, `Prescription`, `Billing`, `ContactUs`, `Notification`, `PasswordResetToken`
 
 `Billing` stores the Razorpay `orderId`, `paymentId`, and `status` (`UNPAID` / `PAID`) per appointment, giving a full payment audit trail per record.
+
+`Patient` and `Doctor` each store a `profilePicture` column holding the Cloudinary-hosted CDN URL of the user's uploaded profile image.
 
 ---
 
@@ -322,6 +384,7 @@ http://localhost:8080/swagger-ui/index.html
 - Maven 3.x
 - MySQL 8.x
 - A Razorpay account (Test Mode keys are free — no business verification needed to start testing)
+- A Cloudinary account (free tier is sufficient for development)
 
 ### 🛠️ Setup
 
@@ -344,6 +407,9 @@ app.jwt.secret=${JWT_SECRET}
 app.jwt.expiration=${JWT_EXPIRATION_MS}
 razorpay.key.id=${RAZORPAY_KEY_ID}
 razorpay.key.secret=${RAZORPAY_KEY_SECRET}
+cloudinary.cloud-name=${CLOUDINARY_CLOUD_NAME}
+cloudinary.api-key=${CLOUDINARY_API_KEY}
+cloudinary.api-secret=${CLOUDINARY_API_SECRET}
 ```
 
 Run:
@@ -366,6 +432,9 @@ Server starts at `http://localhost:8080`
 | `JWT_EXPIRATION_MS` | Token TTL in milliseconds | `86400000` (24h) |
 | `RAZORPAY_KEY_ID` | Razorpay API Key ID (test or live) | `rzp_test_xxxxxxxxxxxx` |
 | `RAZORPAY_KEY_SECRET` | Razorpay API Key Secret (test or live) | `your_razorpay_key_secret` |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary account cloud name | `your_cloud_name` |
+| `CLOUDINARY_API_KEY` | Cloudinary API key | `123456789012345` |
+| `CLOUDINARY_API_SECRET` | Cloudinary API secret | `your_cloudinary_secret` |
 
 ---
 
@@ -418,10 +487,12 @@ Patients and doctors can:
 This project was built to demonstrate practical, production-grade backend engineering rather than tutorial-level CRUD:
 
 - 🔐 **Security-first payment handling** — billing status is never trusted from the client; it's gated behind server-side HMAC signature verification, mirroring real fintech/healthtech systems.
+- ☁️ **Stateless media handling** — profile pictures stream directly to Cloudinary rather than local disk, keeping the API instance-agnostic and production-portable from day one.
 - 🪪 **Stateless, role-scoped JWT auth** with a proper OAuth2 social login path alongside it.
 - 🧩 **Consistent error contracts** across the entire API via a single global exception handler.
 - 🏗️ **Domain-driven package structure** that scales cleanly as features are added, rather than a flat MVC layout.
-- 🔗 **Real third-party integration experience** with Razorpay's order lifecycle (create → checkout → verify), not a simulated or mocked payment button.
+- 🔗 **Real third-party integration experience** with Razorpay's order lifecycle (create → checkout → verify) and Cloudinary's upload API — not simulated or mocked integrations.
+- 🎥 **Documented engineering process** — video walkthroughs above show real debugging and design decisions, not just polished final output.
 
 ---
 
