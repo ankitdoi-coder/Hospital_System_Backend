@@ -28,7 +28,6 @@ import com.ankit.HealthCare_Backend.authentication.dto.*;
 @Tag(name = "Authentication", description = "Register, Login, OTP verification, Password reset and OAuth2 endpoints")
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:3000"})
 @RequiredArgsConstructor
 public class AuthenticationController {
     private final AuthService authService;

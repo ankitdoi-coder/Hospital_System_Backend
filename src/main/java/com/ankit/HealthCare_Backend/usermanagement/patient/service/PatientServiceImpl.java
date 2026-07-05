@@ -335,6 +335,8 @@ public class PatientServiceImpl implements PatientService {
         dto.setLastName(patient.getLastName());
         dto.setContactNumber(patient.getContactNumber());
         dto.setDob(patient.getDob());
+        dto.setProfilePicture(patient.getProfilePicture());
+        dto.setEmail(patient.getUser().getEmail()); 
         return dto;
     }
 

@@ -73,6 +73,8 @@ public class DoctorServiceImpl implements DoctorService {
         dto.setExperience(doctor.getExperience());
         dto.setApproved(doctor.isApproved());
         dto.setEmail(email);
+        dto.setProfilePicture(doctor.getProfilePicture()); 
+        
         return dto;
     }
 

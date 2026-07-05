@@ -28,4 +28,7 @@ public class PatientDTO {
 
     @Schema(description = "Email address", example = "john@gmail.com")
     private String email;
+
+    @Schema(description = "URL of the patient's profile picture", example = "https://res.cloudinary.com/.../profile.jpg")
+    private String profilePicture;   
 }

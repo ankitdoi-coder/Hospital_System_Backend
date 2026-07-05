@@ -34,4 +34,9 @@ public class Doctor {
 
     @Column(name = "experience", nullable = false)
     private int experience; // in years
+
+    @Column(name="profile_picture")
+    private String profilePicture;  //stores the url of PFP
+
+
 }

@@ -27,4 +27,7 @@ public class DoctorDTO {
 
     @Schema(description = "Whether the doctor is approved by admin to login and accept appointments", example = "true")
     private boolean isApproved;
+
+    @Schema(description = "URL of the Doctor's profile picture", example = "https://res.cloudinary.com/.../profile.jpg")
+    private String profilePicture;   
 }

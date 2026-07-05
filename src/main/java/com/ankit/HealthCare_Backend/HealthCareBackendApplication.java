@@ -5,7 +5,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
-import com.ankit.HealthCare_Backend.core.config.AppProperties;
+import com.ankit.HealthCare_Backend.authentication.security.AppProperties;
 
 @SpringBootApplication
 @EnableConfigurationProperties(AppProperties.class)

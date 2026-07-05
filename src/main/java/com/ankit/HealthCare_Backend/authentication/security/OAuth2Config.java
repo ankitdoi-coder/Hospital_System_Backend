@@ -1,4 +1,4 @@
-package com.ankit.HealthCare_Backend.core.config;
+package com.ankit.HealthCare_Backend.authentication.security;
 
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;

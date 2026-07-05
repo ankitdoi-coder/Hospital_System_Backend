@@ -1,5 +1,5 @@
 //contains secret key its like a drower for application.properties
-package com.ankit.HealthCare_Backend.core.config;
+package com.ankit.HealthCare_Backend.authentication.security;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;

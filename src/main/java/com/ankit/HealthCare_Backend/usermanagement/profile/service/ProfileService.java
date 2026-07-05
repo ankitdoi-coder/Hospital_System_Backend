@@ -1,31 +1,38 @@
 package com.ankit.HealthCare_Backend.usermanagement.profile.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.ankit.HealthCare_Backend.filemanagement.entity.ProfilePicture;
-import com.ankit.HealthCare_Backend.filemanagement.repository.ProfilePictureRepository;
+import com.ankit.HealthCare_Backend.Cloudinary.CloudinaryService;
+import com.ankit.HealthCare_Backend.usermanagement.doctor.entity.Doctor;
+import com.ankit.HealthCare_Backend.usermanagement.doctor.repository.DoctorRepository;
+import com.ankit.HealthCare_Backend.usermanagement.patient.entity.Patient;
+import com.ankit.HealthCare_Backend.usermanagement.patient.repository.PatientRepository;
+import com.ankit.HealthCare_Backend.usermanagement.user.entity.User;
+import com.ankit.HealthCare_Backend.usermanagement.user.repository.UserRepository;
+
+import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.Optional;
-import java.util.UUID;
+
+
 
 @Service
+@Slf4j
+@RequiredArgsConstructor
 public class ProfileService {
 
-    @Autowired
-    private ProfilePictureRepository profilePictureRepository;
+    private final CloudinaryService cloudinaryService;
+    private final UserRepository userRepo;
+    private final PatientRepository patientRepo;
+    private final DoctorRepository doctorRepo;
 
-    @Value("${app.file.upload.dir}")
-    private String uploadDir;
+    @Transactional
+    public String uploadProfilePicture(MultipartFile file, String userEmail) throws IOException {
 
-    public String uploadProfilePicture(MultipartFile file, String userEmail, String userType) throws IOException {
         // Validate file
         if (file.isEmpty()) {
             throw new IllegalArgumentException("File is empty");
@@ -33,6 +40,7 @@ public class ProfileService {
 
         // Validate file type
         String contentType = file.getContentType();
+        log.info("validating file Content Type");
         if (contentType == null || !contentType.startsWith("image/")) {
             throw new IllegalArgumentException("File must be an image");
         }
@@ -42,87 +50,80 @@ public class ProfileService {
             throw new IllegalArgumentException("File size must be less than 5MB");
         }
 
-        // Create upload directory if it doesn't exist
-        Path uploadPath = Paths.get(uploadDir);
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
+        //Save to Cloudinary
+        String url=cloudinaryService.uploadImage(file);
+        User user=userRepo.findByEmail(userEmail);
+
+        if("PATIENT".equalsIgnoreCase(user.getRole().getName())){
+            Patient patient=patientRepo.findByUserId(user.getId());
+            
+            patient.setProfilePicture(url);
+            patientRepo.save(patient);
+        } else if ("DOCTOR".equalsIgnoreCase(user.getRole().getName())) {
+            Doctor doctor = doctorRepo.findByUserId(user.getId());
+            doctor.setProfilePicture(url);
+            doctorRepo.save(doctor);
         }
-
-        // Generate unique filename
-        String originalFilename = file.getOriginalFilename();
-        String fileExtension = originalFilename != null ? 
-            originalFilename.substring(originalFilename.lastIndexOf(".")) : ".jpg";
-        String filename = UUID.randomUUID().toString() + fileExtension;
-        
-        // Save file to disk
-        Path filePath = uploadPath.resolve(filename);
-        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-        // Save or update database record
-        Optional<ProfilePicture> existingPicture = profilePictureRepository
-            .findByUserEmailAndUserType(userEmail, userType);
-
-        ProfilePicture profilePicture;
-        if (existingPicture.isPresent()) {
-            profilePicture = existingPicture.get();
-            // Delete old file if exists
-            if (profilePicture.getFilePath() != null) {
-                try {
-                    Files.deleteIfExists(Paths.get(profilePicture.getFilePath()));
-                } catch (IOException e) {
-                    // Log error but continue
-                    System.err.println("Failed to delete old profile picture: " + e.getMessage());
-                }
-            }
-            profilePicture.setFilename(filename);
-            profilePicture.setFilePath(filePath.toString());
-        } else {
-            profilePicture = new ProfilePicture();
-            profilePicture.setUserEmail(userEmail);
-            profilePicture.setUserType(userType);
-            profilePicture.setFilename(filename);
-            profilePicture.setFilePath(filePath.toString());
-        }
-
-        profilePictureRepository.save(profilePicture);
 
         // Return URL that can be used to access the image
-        return "/api/files/profile-pictures/" + filename;
+        return url;
     }
 
-    public String getProfilePictureUrl(String userEmail, String userType) {
-        Optional<ProfilePicture> profilePicture = profilePictureRepository
-            .findByUserEmailAndUserType(userEmail, userType);
 
-        if (profilePicture.isPresent()) {
-            return "/api/files/profile-pictures/" + profilePicture.get().getFilename();
+
+    //delete Service
+    @Transactional
+    public void deleteProfilePicture(String userEmail) throws IOException {
+        User user = userRepo.findByEmail(userEmail);
+        if (user == null) {
+            log.warn("Attempted to delete profile picture for non-existent user: {}", userEmail);
+            return;
         }
 
-        return null;
-    }
+        String imageUrl = null;
+        String resolvedUserType = user.getRole() != null ? user.getRole().getName() : null;
 
-    public void deleteProfilePicture(String userEmail, String userType) throws IOException {
-        Optional<ProfilePicture> profilePicture = profilePictureRepository
-            .findByUserEmailAndUserType(userEmail, userType);
-
-        if (profilePicture.isPresent()) {
-            ProfilePicture picture = profilePicture.get();
-            
-            // Delete file from disk
-            if (picture.getFilePath() != null) {
-                Files.deleteIfExists(Paths.get(picture.getFilePath()));
+        if ("PATIENT".equalsIgnoreCase(resolvedUserType)) {
+            Patient patient = patientRepo.findByUserId(user.getId());
+            if (patient != null) {
+                imageUrl = patient.getProfilePicture();
+                patient.setProfilePicture(null);
+                patientRepo.save(patient);
             }
+        } else if ("DOCTOR".equalsIgnoreCase(resolvedUserType)) {
+            Doctor doctor = doctorRepo.findByUserId(user.getId());
+            if (doctor != null) {
+                imageUrl = doctor.getProfilePicture();
+                doctor.setProfilePicture(null);
+                doctorRepo.save(doctor);
+            }
+         } else {
+            log.warn("Unsupported role for profile picture deletion: {}", resolvedUserType);
+            return;
+        }
 
-            // Delete database record
-            profilePictureRepository.delete(picture);
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            String publicId = extractPublicIdFromUrl(imageUrl);
+            if (publicId != null) {
+                log.info("Deleting image from Cloudinary with public_id: {}", publicId);
+                cloudinaryService.deleteImage(publicId);
+            } else {
+                log.warn("Could not extract public_id from URL: {}", imageUrl);
+            }
         }
     }
 
-    public byte[] getProfilePictureFile(String filename) throws IOException {
-        Path filePath = Paths.get(uploadDir).resolve(filename);
-        if (Files.exists(filePath)) {
-            return Files.readAllBytes(filePath);
+    private String extractPublicIdFromUrl(String url) {
+        try {
+            // Example URL: http://res.cloudinary.com/cloud/image/upload/v123/healthcare/profiles/sample.jpg
+            // We want to extract "healthcare/profiles/sample"
+            int uploadIndex = url.indexOf("/upload/");
+            String afterUpload = url.substring(uploadIndex + "/upload/".length());
+            String publicIdWithVersionAndExtension = afterUpload.substring(afterUpload.indexOf("/") + 1);
+            return publicIdWithVersionAndExtension.substring(0, publicIdWithVersionAndExtension.lastIndexOf('.'));
+        } catch (Exception e) {
+            log.error("Could not extract public_id from url: {}", url, e);
+            return null;
         }
-        return null;
     }
 }
