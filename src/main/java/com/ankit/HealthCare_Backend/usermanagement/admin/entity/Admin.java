@@ -1,5 +1,7 @@
 package com.ankit.HealthCare_Backend.usermanagement.admin.entity;
 
+import com.ankit.HealthCare_Backend.Audits.BaseAuditEntity;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;

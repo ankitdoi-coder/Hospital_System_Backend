@@ -1,5 +1,6 @@
 package com.ankit.HealthCare_Backend.usermanagement.user.entity;
 
+import com.ankit.HealthCare_Backend.Audits.BaseAuditEntity;
 import com.ankit.HealthCare_Backend.core.entity.Role;
 
 import jakarta.persistence.Column;
@@ -20,7 +21,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "Users")
-public class User {
+public class User extends BaseAuditEntity{
     @Id
     @GeneratedValue(strategy =GenerationType.IDENTITY)
     private Long id;

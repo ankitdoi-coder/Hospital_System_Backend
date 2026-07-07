@@ -2,6 +2,7 @@ package com.ankit.HealthCare_Backend.prescription.entity;
 
 import java.time.LocalDateTime;
 
+import com.ankit.HealthCare_Backend.Audits.BaseAuditEntity;
 import com.ankit.HealthCare_Backend.appointment.entity.Appointment;
 
 import jakarta.persistence.Column;
@@ -21,7 +22,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Prescription {
+public class Prescription extends BaseAuditEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -36,11 +37,5 @@ public class Prescription {
     @Column(name = "dosage")
     private String dosages;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-    }
+   
 }

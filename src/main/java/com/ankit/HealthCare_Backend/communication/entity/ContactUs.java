@@ -7,12 +7,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
+import com.ankit.HealthCare_Backend.Audits.BaseAuditEntity;
+
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "Contact Us form submission")
-public class ContactUs {
+public class ContactUs extends BaseAuditEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

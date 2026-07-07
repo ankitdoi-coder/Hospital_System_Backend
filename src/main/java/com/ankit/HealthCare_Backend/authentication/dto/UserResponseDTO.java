@@ -27,7 +27,7 @@ public class UserResponseDTO {
     private String specialty;
 
     @Schema(description = "Contact number (null for doctors)", example = "9876543210")
-    private Long contactNumber;
+    private String contactNumber;
 
     @Schema(description = "Date of birth (null for doctors)", example = "1995-06-15")
     private LocalDate dob;

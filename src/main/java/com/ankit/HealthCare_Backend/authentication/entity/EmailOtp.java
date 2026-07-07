@@ -5,11 +5,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
+import com.ankit.HealthCare_Backend.Audits.BaseAuditEntity;
+
 @Entity
 @Table(name = "email_otps")
 @Data
 @NoArgsConstructor
-public class EmailOtp {
+public class EmailOtp extends BaseAuditEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

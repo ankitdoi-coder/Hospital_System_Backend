@@ -2,6 +2,8 @@ package com.ankit.HealthCare_Backend.Notification;
 
 import java.time.LocalDateTime;
 
+import com.ankit.HealthCare_Backend.Audits.BaseAuditEntity;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -20,7 +22,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "notifications")
-public class NotificationEntity {
+public class NotificationEntity extends BaseAuditEntity{
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -42,11 +44,4 @@ public class NotificationEntity {
     @Column(name = "is_read", nullable = false)
     private boolean isRead = false;
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-    }
 }

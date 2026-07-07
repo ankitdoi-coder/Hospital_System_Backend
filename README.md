@@ -66,6 +66,16 @@ I've recorded short walkthroughs breaking down some of the trickier features and
 
 ---
 
+## 🏗️ Auditing & Persistence Infrastructure
+
+To maintain professional-grade data traceability, the system implements **JPA Auditing**.
+
+- **Automatic Metadata:** Every core entity automatically records when it was created/modified and who performed the action.
+- **Traceability:** Integrated with Spring Security to capture the currently logged-in user via `AuditorAware`.
+- **Implementation:** Utilizes `@MappedSuperclass` with `BaseAuditEntity` to eliminate boilerplate, ensuring consistent `created_at`, `updated_at`, `created_by`, and `updated_by` fields across the entire database schema.
+
+---
+
 ## 🏛️ Architecture
 
 ![Architecture Diagram](https://raw.githubusercontent.com/ankitdoi-coder/HealthCare-Backend/main/Requirements%20&%20Architecture/06_Architecture_workflow.png)

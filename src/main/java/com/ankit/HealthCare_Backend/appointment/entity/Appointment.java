@@ -6,6 +6,7 @@ import java.time.LocalTime;
 import com.ankit.HealthCare_Backend.usermanagement.doctor.entity.Doctor;
 import com.ankit.HealthCare_Backend.usermanagement.patient.entity.Patient;
 import com.ankit.HealthCare_Backend.core.enums.AppointmentStatusEnum;
+import com.ankit.HealthCare_Backend.Audits.BaseAuditEntity;
 import com.ankit.HealthCare_Backend.Notification.NotificationEntity;
 
 import jakarta.persistence.Column;
@@ -28,7 +29,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name="Appointments")
-public class Appointment {
+public class Appointment extends BaseAuditEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

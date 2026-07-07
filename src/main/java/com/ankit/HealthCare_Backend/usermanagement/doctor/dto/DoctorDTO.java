@@ -23,7 +23,7 @@ public class DoctorDTO {
     private String email;
 
     @Schema(description = "Years of experience", example = "8")
-    private int experience;
+    private String experience;
 
     @Schema(description = "Whether the doctor is approved by admin to login and accept appointments", example = "true")
     private boolean isApproved;

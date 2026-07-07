@@ -6,13 +6,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 
+import com.ankit.HealthCare_Backend.Audits.BaseAuditEntity;
 import com.ankit.HealthCare_Backend.usermanagement.user.entity.User;
 
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Patient {
+public class Patient extends BaseAuditEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -34,7 +35,7 @@ public class Patient {
 
     
     @Column(name = "contact_number", nullable = false)
-    private Long contactNumber;
+    private String contactNumber;
 
     @Column(name="profile_picture")
     private String profilePicture;  //stores the url of PFP

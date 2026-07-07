@@ -97,7 +97,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         // Set mandatory non-null fields for Patient (if any)
         // These might need default values or you might need a step
         // in your frontend for the user to complete their profile.
-        newPatient.setContactNumber(0L); // Default/Placeholder - User should update this
+        newPatient.setContactNumber("0000000000"); // Default/Placeholder - User should update this
         newPatient.setDob(LocalDate.now()); // Default/Placeholder - User should update this
 
         patientRepository.save(newPatient); // Save the Patient profile

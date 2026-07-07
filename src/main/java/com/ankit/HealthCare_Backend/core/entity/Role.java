@@ -1,5 +1,7 @@
 package com.ankit.HealthCare_Backend.core.entity;
 
+import com.ankit.HealthCare_Backend.Audits.BaseAuditEntity;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;

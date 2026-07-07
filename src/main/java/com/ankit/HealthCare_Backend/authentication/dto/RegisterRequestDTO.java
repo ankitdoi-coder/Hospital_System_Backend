@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Digits;
 
 @Data
@@ -38,12 +39,13 @@ public class RegisterRequestDTO {
     private String specialty;
 
     @Schema(description = "10-digit contact number", example = "9876543210")
-    @Digits(integer = 10, fraction = 0, message = "Phone must be exactly 10 Digits")
-    private Long contactNumber;
+    @NotBlank(message = "Contact number cannot be empty")
+    @Pattern(regexp = "^[0-9]{10}$", message = "Contact number must be exactly 10 digits")
+    private String contactNumber;
 
     @Schema(description = "Date of birth", example = "1995-06-15")
     private LocalDate dob;
 
     @Schema(description = "Years of experience (only for Doctor role)", example = "5")
-    private int experience;
+    private String experience;
 }

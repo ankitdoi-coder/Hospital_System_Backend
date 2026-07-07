@@ -1,5 +1,6 @@
 package com.ankit.HealthCare_Backend.billing.entity;
 
+import com.ankit.HealthCare_Backend.Audits.BaseAuditEntity;
 import com.ankit.HealthCare_Backend.appointment.entity.Appointment;
 import com.ankit.HealthCare_Backend.core.enums.BillingStatus;
 
@@ -21,7 +22,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Billing {
+public class Billing extends BaseAuditEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

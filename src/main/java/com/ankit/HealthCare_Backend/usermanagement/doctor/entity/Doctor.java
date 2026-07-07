@@ -1,5 +1,6 @@
 package com.ankit.HealthCare_Backend.usermanagement.doctor.entity;
 
+import com.ankit.HealthCare_Backend.Audits.BaseAuditEntity;
 import com.ankit.HealthCare_Backend.usermanagement.user.entity.User;
 
 import jakarta.persistence.*;
@@ -11,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Doctor {
+public class Doctor extends BaseAuditEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -33,7 +34,10 @@ public class Doctor {
     private boolean isApproved = false;
 
     @Column(name = "experience", nullable = false)
-    private int experience; // in years
+    private String experience; // in years
+
+    @Column(name = "contact_number")
+    private String contactNumber;
 
     @Column(name="profile_picture")
     private String profilePicture;  //stores the url of PFP

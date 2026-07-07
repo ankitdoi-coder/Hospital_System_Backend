@@ -6,11 +6,13 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+import com.ankit.HealthCare_Backend.Audits.BaseAuditEntity;
+
 @Entity
 @Table(name = "password_reset_tokens")
 @Data
 @NoArgsConstructor
-public class PasswordResetToken {
+public class PasswordResetToken extends BaseAuditEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
