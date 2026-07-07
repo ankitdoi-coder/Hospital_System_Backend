@@ -13,6 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class OAuth2Config {
 
+    //this repo is used to find all Oauth registeration provider in our app
+    //like if we have meta login, google,github toh ye ffind karegi ki kahan hai apna client
     private final ClientRegistrationRepository clientRegistrationRepository;
 
     @EventListener(ApplicationReadyEvent.class)

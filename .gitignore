@@ -36,8 +36,6 @@ build/
 .env
 .env.local
 .env.*.local
-.env.prod.example
-application-local.properties
 *.pem
 *.key
 *.p12
