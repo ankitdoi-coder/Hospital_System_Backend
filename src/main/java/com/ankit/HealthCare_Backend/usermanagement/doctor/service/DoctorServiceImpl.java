@@ -178,8 +178,10 @@ public class DoctorServiceImpl implements DoctorService {
         if (patient.getUser() != null) {
             dto.setEmail(patient.getUser().getEmail());
         }
+        //sets the pfp
         dto.setProfilePicture(patient.getProfilePicture());
         return dto;
+        
     }
 
     private PrescriptionDTO convertToPrescriptionDto(Prescription prescription) {
