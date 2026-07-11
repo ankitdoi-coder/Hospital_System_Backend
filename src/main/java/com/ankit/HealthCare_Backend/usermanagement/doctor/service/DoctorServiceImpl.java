@@ -161,8 +161,9 @@ public class DoctorServiceImpl implements DoctorService {
         dto.setDoctorId(appointment.getDoctor().getId());
         dto.setAppointmentDate(appointment.getAppointmentDate());
         dto.setAppointmentTime(appointment.getAppointmentTime());
-        dto.setReasonForVisit(appointment.getReasonForVisit());
+        dto.setReasonForVisit(appointment.getReasonForVisit()); 
         dto.setStatus(appointment.getStatus());
+        dto.setProfilePicture(appointment.getPatient().getProfilePicture());
         return dto;
     }
 
@@ -177,6 +178,7 @@ public class DoctorServiceImpl implements DoctorService {
         if (patient.getUser() != null) {
             dto.setEmail(patient.getUser().getEmail());
         }
+        dto.setProfilePicture(patient.getProfilePicture());
         return dto;
     }
 

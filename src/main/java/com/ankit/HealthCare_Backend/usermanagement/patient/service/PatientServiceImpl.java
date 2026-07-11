@@ -78,7 +78,7 @@ public class PatientServiceImpl implements PatientService {
     }
 
     // Convert Doctor Entity Data to DoctorDTO Data
-    private DoctorDTO convertToDoctorDto(Doctor doctor) {
+    private DoctorDTO   convertToDoctorDto(Doctor doctor) {
         DoctorDTO dto = new DoctorDTO();
         dto.setId(doctor.getId());
         dto.setFirstName(doctor.getFirstName());
@@ -87,6 +87,7 @@ public class PatientServiceImpl implements PatientService {
         dto.setApproved(doctor.isApproved());
         dto.setEmail(doctor.getUser().getEmail());
         dto.setExperience(doctor.getExperience());
+        dto.setProfilePicture(doctor.getProfilePicture());
         // Add other fields as needed
         return dto;
     }

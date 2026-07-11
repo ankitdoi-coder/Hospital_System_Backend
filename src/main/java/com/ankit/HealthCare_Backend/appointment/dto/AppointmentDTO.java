@@ -52,4 +52,7 @@ public class AppointmentDTO {
 
     @Schema(description = "Appointment fee in rupees", example = "500")
     private Integer amount;
+
+    
+    private String profilePicture;
 }

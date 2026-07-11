@@ -70,7 +70,10 @@ public class AdminServiceImpl implements AdminService {
         dto.setId(doctor.getId());
         dto.setFirstName(doctor.getFirstName());
         dto.setLastName(doctor.getLastName());
+        dto.setEmail(doctor.getUser().getEmail());
+        dto.setExperience(doctor.getExperience());
         dto.setSpecialty(doctor.getSpecialty());
+        dto.setProfilePicture(doctor.getProfilePicture());
         dto.setApproved(doctor.isApproved());
         return dto;
     }
