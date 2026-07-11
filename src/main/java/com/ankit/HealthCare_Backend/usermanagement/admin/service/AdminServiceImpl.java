@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,11 +36,8 @@ public class AdminServiceImpl implements AdminService {
 
     // get the list of the doctors
     @Override
-    public List<DoctorDTO> getAllDoctors() {
-        List<Doctor> doctors = doctorRepo.findAll();
-        return doctors.stream()
-                .map(appointment -> convertToDoctorDto(appointment))
-                .collect(Collectors.toList());
+    public Page<DoctorDTO> getAllDoctors(Pageable page) {
+        return doctorRepo.findAll(page).map(this::convertToDoctorDto);
     }
 
     // approve Doctor
@@ -61,11 +60,8 @@ public class AdminServiceImpl implements AdminService {
 
     // get all the patient
     @Override
-    public List<PatientDTO> getAllPatients() {
-        List<Patient> patients = patientRepo.findAll();
-        return patients.stream()
-                .map(appointment -> convertToPatientDto(appointment))
-                .collect(Collectors.toList());
+    public Page<PatientDTO> getAllPatients(Pageable pageable) {
+        return patientRepo.findAll(pageable).map(this::convertToPatientDto);
     }
 
     // helper method

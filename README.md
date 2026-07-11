@@ -29,15 +29,15 @@ Implements real-world engineering practices including JWT-based auth, role-based
 
 I've recorded short walkthroughs breaking down some of the trickier features and bugs in this project — not just showing that it works, but explaining the *reasoning* behind the implementation.
 
-| # | Topic | Link |
-|---|---|---|
-| 1 | 🔔 Notification Feature — Overview | [▶ Watch](https://youtu.be/mJa_I60yNYk?si=jBbiUTr2HLxPM4bt) |
-| 2 | 🧩 Notification Feature — Service & Repository Layer | [▶ Watch](https://youtu.be/Rj3RG-A-wn0?si=nwBGXUSvE3xxUsSR) |
-| 3 | ✅ In-App Notification Feature — Completed Walkthrough | [▶ Watch](https://youtu.be/fs9LxIsQvME?si=rK6OaHf02rvm3U3-) |
-| 4 | 🐞 JWT Authentication Bug Fix — Root Cause & Resolution | [▶ Watch](https://youtu.be/uyvSxrhkSR8?si=9AJxx--k1zeFRAHy) |
-| 5 | ✅ Bean Validation & Global Exception Handler | [▶ Watch](https://youtu.be/j93XCeoUj28?si=NL4z7jZyLpFrPAt6) |
-| 6 | 📧 OTP-Based Registration Flow | [▶ Watch](https://youtu.be/8FZdOrmtN2A?si=ZC2RkhXvxhLi4Wuo) |
-| 7 | 🔑 OTP Email-Based Password Reset | [▶ Watch](https://youtu.be/1MH0xzRQ0OM?si=_MpSCJ_vM0tZSQea) |
+| #   | Topic                                                  | Link                                                        |
+| --- | ------------------------------------------------------ | ----------------------------------------------------------- |
+| 1   | 🔔 Notification Feature — Overview                      | [▶ Watch](https://youtu.be/mJa_I60yNYk?si=jBbiUTr2HLxPM4bt) |
+| 2   | 🧩 Notification Feature — Service & Repository Layer    | [▶ Watch](https://youtu.be/Rj3RG-A-wn0?si=nwBGXUSvE3xxUsSR) |
+| 3   | ✅ In-App Notification Feature — Completed Walkthrough  | [▶ Watch](https://youtu.be/fs9LxIsQvME?si=rK6OaHf02rvm3U3-) |
+| 4   | 🐞 JWT Authentication Bug Fix — Root Cause & Resolution | [▶ Watch](https://youtu.be/uyvSxrhkSR8?si=9AJxx--k1zeFRAHy) |
+| 5   | ✅ Bean Validation & Global Exception Handler           | [▶ Watch](https://youtu.be/j93XCeoUj28?si=NL4z7jZyLpFrPAt6) |
+| 6   | 📧 OTP-Based Registration Flow                          | [▶ Watch](https://youtu.be/8FZdOrmtN2A?si=ZC2RkhXvxhLi4Wuo) |
+| 7   | 🔑 OTP Email-Based Password Reset                       | [▶ Watch](https://youtu.be/1MH0xzRQ0OM?si=_MpSCJ_vM0tZSQea) |
 
 > 💡 These videos are meant to give reviewers a look into my thought process — how I debug, design, and reason through real backend problems, not just the final code.
 
@@ -45,24 +45,25 @@ I've recorded short walkthroughs breaking down some of the trickier features and
 
 ## ✨ Key Highlights (What Makes This Stand Out)
 
-| Feature | Details |
-|---|---|
-| 🔐 **JWT Auth + Role-Based Access** | Stateless authentication with role-scoped endpoints (ADMIN / DOCTOR / PATIENT) |
-| 📧 **Email OTP Verification** | 6-digit OTP sent via email before registration; 10-minute expiry, single-use, auto-cleared on resend |
-| 🌐 **Google OAuth2 Social Login** | Patients and doctors can sign in with Google via Spring OAuth2 client |
-| 💳 **Razorpay Payment Gateway** | Real, verified online payments for appointment billing — UPI, Cards & Netbanking, with server-side signature verification |
-| ☁️ **Cloudinary Cloud Media Storage** | Profile pictures uploaded via multipart requests are validated, streamed, and persisted to Cloudinary — no local disk dependency, fully production-portable |
-| 🛡️ **Global Exception Handler** | `@RestControllerAdvice` catches all exceptions — validation, auth, not-found, duplicates — and returns consistent JSON error responses with timestamp |
-| ✅ **Bean Validation** | `@Valid` + Jakarta Validation annotations (`@NotNull`, `@NotBlank`, `@Email`, `@Digits`) on all request DTOs |
-| 🩺 **Doctor Approval Workflow** | Doctors register but are locked out until an Admin approves their account |
-| 🔑 **Password Reset Flow** | Forgot-password → token generation → reset-password via secure token |
-| 💰 **Billing & Revenue Module** | Appointments auto-generate billing records; Admin can view daily/monthly revenue stats |
-| 📁 **Role-Aware File Management** | Multipart profile picture upload/retrieval shared across PATIENT and DOCTOR roles, backed by Cloudinary |
-| 🔔 **Real-time Appointment Notifications** | Dual-channel notifications (in-app + email) for appointment creation & status tracking; includes time & reason details |
-| 📬 **Notification Entity** | In-app notification system with read/unread tracking and multi-type support (Appointment, Prescription, Payment, Registration) |
-| 📚 **Swagger / OpenAPI Docs** | Auto-generated interactive API docs via SpringDoc OpenAPI 2.5 |
-| 🌍 **CORS Configured** | Whitelisted for React frontend at `localhost:5173` and `localhost:3000` via `allowedOriginPatterns`, safely combined with credentialed requests |
-| ⚡ **Stateless Sessions** | `SessionCreationPolicy.STATELESS` — no server-side session state |
+| Feature                                     | Details                                                                                                                                                                                                                |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🔐 **JWT Auth + Role-Based Access**          | Stateless authentication with role-scoped endpoints (ADMIN / DOCTOR / PATIENT)                                                                                                                                         |
+| 📧 **Email OTP Verification**                | 6-digit OTP sent via email before registration; 10-minute expiry, single-use, auto-cleared on resend                                                                                                                   |
+| 🌐 **Google OAuth2 Social Login**            | Patients and doctors can sign in with Google via Spring OAuth2 client                                                                                                                                                  |
+| 💳 **Razorpay Payment Gateway**              | Real, verified online payments for appointment billing — UPI, Cards & Netbanking, with server-side signature verification                                                                                              |
+| ☁️ **Cloudinary Cloud Media Storage**        | Profile pictures uploaded via multipart requests are validated, streamed, and persisted to Cloudinary — no local disk dependency, fully production-portable                                                            |
+| 🛡️ **Global Exception Handler**              | `@RestControllerAdvice` catches all exceptions — validation, auth, not-found, duplicates — and returns consistent JSON error responses with timestamp                                                                  |
+| ✅ **Bean Validation**                       | `@Valid` + Jakarta Validation annotations (`@NotNull`, `@NotBlank`, `@Email`, `@Digits`) on all request DTOs                                                                                                           |
+| 🩺 **Doctor Approval Workflow**              | Doctors register but are locked out until an Admin approves their account                                                                                                                                              |
+| 🔑 **Password Reset Flow**                   | Forgot-password → token generation → reset-password via secure token                                                                                                                                                   |
+| 💰 **Billing & Revenue Module**              | Appointments auto-generate billing records; Admin can view daily/monthly revenue stats                                                                                                                                 |
+| 📁 **Role-Aware File Management**            | Multipart profile picture upload/retrieval shared across PATIENT and DOCTOR roles, backed by Cloudinary                                                                                                                |
+| 🔔 **Real-time Appointment Notifications**   | Dual-channel notifications (in-app + email) for appointment creation & status tracking; includes time & reason details                                                                                                 |
+| 📬 **Notification Entity**                   | In-app notification system with read/unread tracking and multi-type support (Appointment, Prescription, Payment, Registration)                                                                                         |
+| 📚 **Swagger / OpenAPI Docs**                | Auto-generated interactive API docs via SpringDoc OpenAPI 2.5                                                                                                                                                          |
+| 🌍 **CORS Configured**                       | Whitelisted for React frontend at `localhost:5173` and `localhost:3000` via `allowedOriginPatterns`, safely combined with credentialed requests                                                                        |
+| ⚡ **Stateless Sessions**                    | `SessionCreationPolicy.STATELESS` — no server-side session state                                                                                                                                                       |
+| 🏗️ **Auditing & Persistence Infrastructure** | `To maintain professional-grade data traceability, the system implements` — Utilizes `@MappedSuperclass` with `BaseAuditEntity` to eliminate boilerplate, ensuring consistent `created_at`, `updated_at`, `created_by` |
 
 ---
 
@@ -125,21 +126,21 @@ com.ankit.HealthCare_Backend/
 
 </div>
 
-| Component | Technology | Version |
-|---|---|---|
-| Framework | Spring Boot | 3.5.7 |
-| Security | Spring Security + JWT (jjwt) | 6.5.7 / 0.11.5 |
-| Social Login | Spring OAuth2 Client (Google) | 6.5.7 |
-| Payment Gateway | Razorpay Java SDK | Latest stable |
-| Media Storage | Cloudinary Java SDK | Latest stable |
-| Email | Spring Boot Starter Mail (JavaMailSender) | 3.5.7 |
-| ORM | Spring Data JPA + Hibernate | 3.5.7 |
-| Database | MySQL (mysql-connector-j) | 8.3.0 |
-| Validation | Spring Boot Starter Validation (Jakarta) | 3.5.7 |
-| API Docs | SpringDoc OpenAPI (Swagger UI) | 2.5.0 |
-| Build | Maven | 3.x |
-| Utilities | Lombok | 1.18.32 |
-| Language | Java | 17 |
+| Component       | Technology                                | Version        |
+| --------------- | ----------------------------------------- | -------------- |
+| Framework       | Spring Boot                               | 3.5.7          |
+| Security        | Spring Security + JWT (jjwt)              | 6.5.7 / 0.11.5 |
+| Social Login    | Spring OAuth2 Client (Google)             | 6.5.7          |
+| Payment Gateway | Razorpay Java SDK                         | Latest stable  |
+| Media Storage   | Cloudinary Java SDK                       | Latest stable  |
+| Email           | Spring Boot Starter Mail (JavaMailSender) | 3.5.7          |
+| ORM             | Spring Data JPA + Hibernate               | 3.5.7          |
+| Database        | MySQL (mysql-connector-j)                 | 8.3.0          |
+| Validation      | Spring Boot Starter Validation (Jakarta)  | 3.5.7          |
+| API Docs        | SpringDoc OpenAPI (Swagger UI)            | 2.5.0          |
+| Build           | Maven                                     | 3.x            |
+| Utilities       | Lombok                                    | 1.18.32        |
+| Language        | Java                                      | 17             |
 
 ---
 
@@ -168,14 +169,14 @@ Profile pictures for both **Patients** and **Doctors** are uploaded directly to 
 
 ### 📌 What's Implemented
 
-| Capability | Status |
-|---|---|
-| Multipart image upload (`multipart/form-data`) | ✅ Implemented |
-| Content-type validation — only `image/*` accepted | ✅ Implemented |
-| File size validation — 5MB max, rejected before upload | ✅ Implemented |
-| Direct stream-to-Cloudinary upload (no local temp storage) | ✅ Implemented |
+| Capability                                                                                   | Status        |
+| -------------------------------------------------------------------------------------------- | ------------- |
+| Multipart image upload (`multipart/form-data`)                                               | ✅ Implemented |
+| Content-type validation — only `image/*` accepted                                            | ✅ Implemented |
+| File size validation — 5MB max, rejected before upload                                       | ✅ Implemented |
+| Direct stream-to-Cloudinary upload (no local temp storage)                                   | ✅ Implemented |
 | Role-aware persistence — updates `Patient` or `Doctor` entity based on logged-in user's role | ✅ Implemented |
-| Returns CDN-backed image URL in response for immediate frontend use | ✅ Implemented |
+| Returns CDN-backed image URL in response for immediate frontend use                          | ✅ Implemented |
 
 ### 🧠 Upload Flow
 
@@ -199,14 +200,14 @@ The billing module integrates **Razorpay** end-to-end for appointment payments �
 
 ### 📌 What's Implemented
 
-| Capability | Status |
-|---|---|
+| Capability                                                             | Status        |
+| ---------------------------------------------------------------------- | ------------- |
 | Order creation via backend (`POST /api/patient/payments/create-order`) | ✅ Implemented |
-| Razorpay Checkout (UPI, Cards, Netbanking) | ✅ Implemented |
-| Server-side payment signature verification (HMAC-SHA256) | ✅ Implemented |
-| Real-time billing status sync (`UNPAID` → `PAID`) | ✅ Implemented |
-| Payment failure & checkout-dismissal handling | ✅ Implemented |
-| Revenue reporting (daily / monthly) | ✅ Implemented |
+| Razorpay Checkout (UPI, Cards, Netbanking)                             | ✅ Implemented |
+| Server-side payment signature verification (HMAC-SHA256)               | ✅ Implemented |
+| Real-time billing status sync (`UNPAID` → `PAID`)                      | ✅ Implemented |
+| Payment failure & checkout-dismissal handling                          | ✅ Implemented |
+| Revenue reporting (daily / monthly)                                    | ✅ Implemented |
 
 ### 🧠 Why It's Built This Way
 
@@ -229,20 +230,20 @@ Razorpay's Test Mode sandbox reproduces the entire checkout, OTP, and verificati
 
 **Card Payment**
 
-| Field | Test Value |
-|---|---|
-| Card Number | `4111 1111 1111 1111` (Visa) or `5267 3181 8797 5449` (Mastercard) |
-| Expiry (MM/YY) | Any future date — e.g. `12/30` |
-| CVV | Any 3 digits — e.g. `123` |
-| Cardholder Name | Any name |
-| OTP | Any 4–10 digit number — e.g. `1234` |
+| Field           | Test Value                                                         |
+| --------------- | ------------------------------------------------------------------ |
+| Card Number     | `4111 1111 1111 1111` (Visa) or `5267 3181 8797 5449` (Mastercard) |
+| Expiry (MM/YY)  | Any future date — e.g. `12/30`                                     |
+| CVV             | Any 3 digits — e.g. `123`                                          |
+| Cardholder Name | Any name                                                           |
+| OTP             | Any 4–10 digit number — e.g. `1234`                                |
 
 Select **Success** on Razorpay's mock bank page to complete the simulated transaction, or use card `4000 0000 0000 0002` and select **Failure** to test the failure path.
 
 **UPI Payment**
 
-| Field | Test Value |
-|---|---|
+| Field  | Test Value         |
+| ------ | ------------------ |
 | UPI ID | `success@razorpay` |
 
 No need to scan the on-screen QR with a real device — that only resolves against live, NPCI-registered transactions. Entering the test UPI ID simulates an instant successful payment in sandbox mode.
@@ -263,15 +264,15 @@ A single `@RestControllerAdvice` class handles all error scenarios and returns a
 }
 ```
 
-| Exception | HTTP Status |
-|---|---|
-| `ResourceNotFoundException` | `404 Not Found` |
-| `DuplicateResourceException` | `409 Conflict` |
-| `UnauthorizedException` | `401 Unauthorized` |
-| `IllegalArgumentException` | `400 Bad Request` |
-| `MethodArgumentNotValidException` | `400 Bad Request` (validation errors) |
-| `PaymentVerificationException` | `400 Bad Request` (Razorpay signature mismatch) |
-| `Exception` (fallback) | `500 Internal Server Error` |
+| Exception                         | HTTP Status                                     |
+| --------------------------------- | ----------------------------------------------- |
+| `ResourceNotFoundException`       | `404 Not Found`                                 |
+| `DuplicateResourceException`      | `409 Conflict`                                  |
+| `UnauthorizedException`           | `401 Unauthorized`                              |
+| `IllegalArgumentException`        | `400 Bad Request`                               |
+| `MethodArgumentNotValidException` | `400 Bad Request` (validation errors)           |
+| `PaymentVerificationException`    | `400 Bad Request` (Razorpay signature mismatch) |
+| `Exception` (fallback)            | `500 Internal Server Error`                     |
 
 ---
 
@@ -304,64 +305,64 @@ Validation failures are caught by the Global Exception Handler and returned as s
 ## 📋 API Endpoints
 
 ### 🔐 Auth — `/api/auth`
-| Method | Endpoint | Description | Auth |
-|---|---|---|---|
-| POST | `/send-otp` | Send 6-digit OTP to email for verification | Public |
-| POST | `/verify-otp` | Verify the OTP before registration | Public |
-| POST | `/register` | Register a new user (Patient/Doctor) | Public |
-| POST | `/login` | Authenticate and receive JWT | Public |
-| POST | `/forgot-password` | Request a password reset token | Public |
-| POST | `/reset-password` | Reset password using token | Public |
-| GET | `/oauth2/callback` | Google OAuth2 redirect handler | Public |
+| Method | Endpoint           | Description                                | Auth   |
+| ------ | ------------------ | ------------------------------------------ | ------ |
+| POST   | `/send-otp`        | Send 6-digit OTP to email for verification | Public |
+| POST   | `/verify-otp`      | Verify the OTP before registration         | Public |
+| POST   | `/register`        | Register a new user (Patient/Doctor)       | Public |
+| POST   | `/login`           | Authenticate and receive JWT               | Public |
+| POST   | `/forgot-password` | Request a password reset token             | Public |
+| POST   | `/reset-password`  | Reset password using token                 | Public |
+| GET    | `/oauth2/callback` | Google OAuth2 redirect handler             | Public |
 
 ### 🧑‍⚕️ Patient — `/api/patient` _(ROLE_PATIENT)_
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/doctors` | Browse all approved doctors |
-| POST | `/appointments/new` | Book a new appointment |
-| GET | `/appointments/my` | View personal appointment history |
-| DELETE | `/appointments/{id}/cancel` | Cancel an appointment |
-| PUT | `/appointments/{id}/pay` | Make payment for an appointment |
-| POST | `/payments/create-order` | Create a Razorpay order for an appointment |
-| POST | `/payments/verify` | Verify Razorpay payment signature and mark billing as `PAID` |
-| GET | `/prescriptions` | View personal prescriptions |
-| GET | `/profile` | View own patient profile (includes `profilePicture` URL) |
+| Method | Endpoint                    | Description                                                  |
+| ------ | --------------------------- | ------------------------------------------------------------ |
+| GET    | `/doctors`                  | Browse all approved doctors                                  |
+| POST   | `/appointments/new`         | Book a new appointment                                       |
+| GET    | `/appointments/my`          | View personal appointment history                            |
+| DELETE | `/appointments/{id}/cancel` | Cancel an appointment                                        |
+| PUT    | `/appointments/{id}/pay`    | Make payment for an appointment                              |
+| POST   | `/payments/create-order`    | Create a Razorpay order for an appointment                   |
+| POST   | `/payments/verify`          | Verify Razorpay payment signature and mark billing as `PAID` |
+| GET    | `/prescriptions`            | View personal prescriptions                                  |
+| GET    | `/profile`                  | View own patient profile (includes `profilePicture` URL)     |
 
 ### 👨‍⚕️ Doctor — `/api/doctor` _(ROLE_DOCTOR)_
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/profile` | View own doctor profile (includes `profilePicture` URL) |
-| GET | `/appointments/my` | View all own appointments |
-| PUT | `/appointments/{id}/status` | Update appointment status (triggers in-app + email notifications) |
-| GET | `/patients` | View all own patients |
-| POST | `/prescription` | Create a prescription |
-| GET | `/prescriptions` | View all own prescriptions |
+| Method | Endpoint                    | Description                                                       |
+| ------ | --------------------------- | ----------------------------------------------------------------- |
+| GET    | `/profile`                  | View own doctor profile (includes `profilePicture` URL)           |
+| GET    | `/appointments/my`          | View all own appointments                                         |
+| PUT    | `/appointments/{id}/status` | Update appointment status (triggers in-app + email notifications) |
+| GET    | `/patients`                 | View all own patients                                             |
+| POST   | `/prescription`             | Create a prescription                                             |
+| GET    | `/prescriptions`            | View all own prescriptions                                        |
 
 ### 🖼️ Profile / File Management — `/api/profile` _(ROLE_PATIENT or ROLE_DOCTOR)_
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/upload-image` | Upload a profile picture (`multipart/form-data`, field: `profilePicture`) — validated, streamed to Cloudinary, and linked to the caller's Patient or Doctor record |
-| DELETE | `/delete-image` | Remove the current profile picture |
+| Method | Endpoint        | Description                                                                                                                                                        |
+| ------ | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| POST   | `/upload-image` | Upload a profile picture (`multipart/form-data`, field: `profilePicture`) — validated, streamed to Cloudinary, and linked to the caller's Patient or Doctor record |
+| DELETE | `/delete-image` | Remove the current profile picture                                                                                                                                 |
 
 ### 🛠️ Admin — `/api/admin` _(ROLE_ADMIN)_
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/doctors` | Get all doctors (including pending) |
-| PUT | `/doctors/{id}/approve` | Approve a doctor |
-| PUT | `/doctors/{id}/reject` | Reject / revoke a doctor |
-| GET | `/patients` | Get all patients |
-| GET | `/billing` | View all billing records |
-| PUT | `/billing/{id}/status` | Update a billing record's status |
-| GET | `/revenue/daily` | Get today's total revenue |
-| GET | `/revenue/monthly` | Get current month's total revenue |
+| Method | Endpoint                | Description                         |
+| ------ | ----------------------- | ----------------------------------- |
+| GET    | `/doctors`              | Get all doctors (including pending) |
+| PUT    | `/doctors/{id}/approve` | Approve a doctor                    |
+| PUT    | `/doctors/{id}/reject`  | Reject / revoke a doctor            |
+| GET    | `/patients`             | Get all patients                    |
+| GET    | `/billing`              | View all billing records            |
+| PUT    | `/billing/{id}/status`  | Update a billing record's status    |
+| GET    | `/revenue/daily`        | Get today's total revenue           |
+| GET    | `/revenue/monthly`      | Get current month's total revenue   |
 
 ### 🔔 Notifications — `/api/notifications` _(ROLE_PATIENT / ROLE_DOCTOR)_
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/my` | Get all notifications for logged-in user (newest first) |
-| GET | `/unread-count` | Get count of unread notifications (for UI badge) |
-| PUT | `/{id}/read` | Mark a specific notification as read |
-| PUT | `/mark-all-read` | Mark all unread notifications as read |
+| Method | Endpoint         | Description                                             |
+| ------ | ---------------- | ------------------------------------------------------- |
+| GET    | `/my`            | Get all notifications for logged-in user (newest first) |
+| GET    | `/unread-count`  | Get count of unread notifications (for UI badge)        |
+| PUT    | `/{id}/read`     | Mark a specific notification as read                    |
+| PUT    | `/mark-all-read` | Mark all unread notifications as read                   |
 
 ---
 
@@ -433,18 +434,18 @@ Server starts at `http://localhost:8080`
 
 ## 🔧 Environment Variables
 
-| Variable | Description | Example |
-|---|---|---|
-| `DB_URL` | JDBC connection URL | `jdbc:mysql://localhost:3306/healthcaredb` |
-| `DB_USERNAME` | Database username | `root` |
-| `DB_PASSWORD` | Database password | `your_password` |
-| `JWT_SECRET` | Secret key for signing JWTs | `a-very-long-random-secret-key` |
-| `JWT_EXPIRATION_MS` | Token TTL in milliseconds | `86400000` (24h) |
-| `RAZORPAY_KEY_ID` | Razorpay API Key ID (test or live) | `rzp_test_xxxxxxxxxxxx` |
-| `RAZORPAY_KEY_SECRET` | Razorpay API Key Secret (test or live) | `your_razorpay_key_secret` |
-| `CLOUDINARY_CLOUD_NAME` | Cloudinary account cloud name | `your_cloud_name` |
-| `CLOUDINARY_API_KEY` | Cloudinary API key | `123456789012345` |
-| `CLOUDINARY_API_SECRET` | Cloudinary API secret | `your_cloudinary_secret` |
+| Variable                | Description                            | Example                                    |
+| ----------------------- | -------------------------------------- | ------------------------------------------ |
+| `DB_URL`                | JDBC connection URL                    | `jdbc:mysql://localhost:3306/healthcaredb` |
+| `DB_USERNAME`           | Database username                      | `root`                                     |
+| `DB_PASSWORD`           | Database password                      | `your_password`                            |
+| `JWT_SECRET`            | Secret key for signing JWTs            | `a-very-long-random-secret-key`            |
+| `JWT_EXPIRATION_MS`     | Token TTL in milliseconds              | `86400000` (24h)                           |
+| `RAZORPAY_KEY_ID`       | Razorpay API Key ID (test or live)     | `rzp_test_xxxxxxxxxxxx`                    |
+| `RAZORPAY_KEY_SECRET`   | Razorpay API Key Secret (test or live) | `your_razorpay_key_secret`                 |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary account cloud name          | `your_cloud_name`                          |
+| `CLOUDINARY_API_KEY`    | Cloudinary API key                     | `123456789012345`                          |
+| `CLOUDINARY_API_SECRET` | Cloudinary API secret                  | `your_cloudinary_secret`                   |
 
 ---
 

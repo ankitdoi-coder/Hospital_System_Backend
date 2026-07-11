@@ -8,5 +8,7 @@ import org.springframework.stereotype.Repository;
 public interface PatientRepository extends JpaRepository<Patient,Long>{
 	// Find a Patient record based on the linked User id
 	Patient findByUserId(Long userId);
+
+	// Page<Patient> findAll(Pageable pageable);
 	
 }

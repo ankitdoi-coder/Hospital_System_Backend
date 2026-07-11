@@ -2,6 +2,8 @@ package com.ankit.HealthCare_Backend.usermanagement.doctor.controller;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -49,16 +52,22 @@ public class DoctorController {
     @Operation(summary = "Get my appointments", description = "Returns all appointments assigned to the logged-in doctor — includes PENDING, SCHEDULED, COMPLETED, CANCELLED")
     @ApiResponse(responseCode = "200", description = "Appointment list returned")
     @GetMapping("/appointments/my")
-    public ResponseEntity<List<AppointmentDTO>> getUpcomingAppointments() {
-        List<AppointmentDTO> appointments = doctorService.myUpcomingAppointments();
-        return ResponseEntity.ok(appointments);
+    public ResponseEntity<Page<AppointmentDTO>> getUpcomingAppointments(
+        @RequestParam(defaultValue="0") int page,
+        @RequestParam(defaultValue="10") int size
+    ) {
+        Page<AppointmentDTO> upcomingAppointments = doctorService.myUpcomingAppointments(PageRequest.of(page,size));
+        return ResponseEntity.ok(upcomingAppointments);
     }
 
     @Operation(summary = "Get my patients", description = "Returns all patients who have at least one appointment with this doctor")
     @ApiResponse(responseCode = "200", description = "Patient list returned")
     @GetMapping("/patients")
-    public ResponseEntity<List<PatientDTO>> getMyPatients() {
-        List<PatientDTO> patients = doctorService.getMyPatients();
+    public ResponseEntity<Page<PatientDTO>> getMyPatients(
+        @RequestParam(defaultValue="0") int page,
+        @RequestParam(defaultValue="10") int size
+    ) {
+        Page<PatientDTO> patients = doctorService.getMyPatients(PageRequest.of(page, size));
         return ResponseEntity.ok(patients);
     }
 

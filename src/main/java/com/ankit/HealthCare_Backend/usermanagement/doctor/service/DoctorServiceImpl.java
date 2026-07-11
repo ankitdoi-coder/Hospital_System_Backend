@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -31,7 +33,6 @@ import com.ankit.HealthCare_Backend.usermanagement.user.repository.UserRepositor
 import com.ankit.HealthCare_Backend.Notification.NotificationService;
 import com.ankit.HealthCare_Backend.Notification.NotificationType;
 
-
 @Service
 public class DoctorServiceImpl implements DoctorService {
 
@@ -49,8 +50,7 @@ public class DoctorServiceImpl implements DoctorService {
     @Autowired
     private JavaMailSender mailSender;
 
-
-    //Get upcoming appoinments of doctor
+    // Get upcoming appoinments of doctor
     @Override
     public DoctorDTO getMyProfile() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -60,10 +60,12 @@ public class DoctorServiceImpl implements DoctorService {
 
         String email = auth.getName();
         User user = userRepo.findByEmail(email);
-        if (user == null) throw new ResourceNotFoundException("User not found: " + email);
+        if (user == null)
+            throw new ResourceNotFoundException("User not found: " + email);
 
         Doctor doctor = doctorRepo.findByUserId(user.getId());
-        if (doctor == null) throw new ResourceNotFoundException("Doctor profile not found for: " + email);
+        if (doctor == null)
+            throw new ResourceNotFoundException("Doctor profile not found for: " + email);
 
         DoctorDTO dto = new DoctorDTO();
         dto.setId(doctor.getId());
@@ -73,14 +75,14 @@ public class DoctorServiceImpl implements DoctorService {
         dto.setExperience(doctor.getExperience());
         dto.setApproved(doctor.isApproved());
         dto.setEmail(email);
-        dto.setProfilePicture(doctor.getProfilePicture()); 
-        
+        dto.setProfilePicture(doctor.getProfilePicture());
+
         return dto;
     }
 
-    //Get upcoming appoinments of doctor
+    // Get upcoming appoinments of doctor
     @Override
-    public List<AppointmentDTO> myUpcomingAppointments() {
+    public Page<AppointmentDTO> myUpcomingAppointments(Pageable pageable) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
             throw new UnauthorizedException("Unauthenticated");
@@ -99,16 +101,16 @@ public class DoctorServiceImpl implements DoctorService {
         }
 
         Long doctorId = doctor.getId();
-        List<Appointment> appointments = appointmentRepo.findByDoctorId(doctorId);
+        Page<Appointment> appointments = appointmentRepo.findByDoctorId(doctorId, pageable);
 
-        return appointments.stream()
-                .map(appointment -> convertToAppointmentDto(appointment))
-                .collect(Collectors.toList());
+        // Space hata diya aur spelling theek kar di hai (aur method reference use kiya
+        // hai clean code ke liye)
+        return appointments.map(this::convertToAppointmentDto);
     }
 
-    //Get all patients who have appointments with this doctor
+    // Get all patients who have appointments with this doctor
     @Override
-    public List<PatientDTO> getMyPatients() {
+    public Page<PatientDTO> getMyPatients(Pageable pageable) { // <-- FIX 1: Use Pageable
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
             throw new UnauthorizedException("Unauthenticated");
@@ -126,16 +128,13 @@ public class DoctorServiceImpl implements DoctorService {
         }
 
         Long doctorId = doctor.getId();
-        List<Appointment> appointments = appointmentRepo.findByDoctorId(doctorId);
 
-        return appointments.stream()
-                .map(appointment -> appointment.getPatient())
-                .distinct()
-                .map(this::convertToPatientDto)
-                .collect(Collectors.toList());
+        // Pass the pageable directly to the repository
+        Page<Appointment> appointments = appointmentRepo.findByDoctorId(doctorId, pageable);
+
+        // Use .map() directly on the Page object (no stream needed)
+        return appointments.map(appointment -> convertToPatientDto(appointment.getPatient()));
     }
-
-    
 
     // createPrescription
     @Override
@@ -154,18 +153,18 @@ public class DoctorServiceImpl implements DoctorService {
 
     // Helper method to convert the entity to a DTO
     private AppointmentDTO convertToAppointmentDto(Appointment appointment) {
-    AppointmentDTO dto = new AppointmentDTO();
-    dto.setId(appointment.getId());
-    dto.setPatientId(appointment.getPatient().getId());
-    dto.setPatientFirstName(appointment.getPatient().getFirstName());
-    dto.setPatientLastName(appointment.getPatient().getLastName());
-    dto.setDoctorId(appointment.getDoctor().getId());
-    dto.setAppointmentDate(appointment.getAppointmentDate());
-    dto.setAppointmentTime(appointment.getAppointmentTime());
-    dto.setReasonForVisit(appointment.getReasonForVisit());
-    dto.setStatus(appointment.getStatus());
-    return dto;
-}
+        AppointmentDTO dto = new AppointmentDTO();
+        dto.setId(appointment.getId());
+        dto.setPatientId(appointment.getPatient().getId());
+        dto.setPatientFirstName(appointment.getPatient().getFirstName());
+        dto.setPatientLastName(appointment.getPatient().getLastName());
+        dto.setDoctorId(appointment.getDoctor().getId());
+        dto.setAppointmentDate(appointment.getAppointmentDate());
+        dto.setAppointmentTime(appointment.getAppointmentTime());
+        dto.setReasonForVisit(appointment.getReasonForVisit());
+        dto.setStatus(appointment.getStatus());
+        return dto;
+    }
 
     private PatientDTO convertToPatientDto(Patient patient) {
         PatientDTO dto = new PatientDTO();
@@ -181,7 +180,6 @@ public class DoctorServiceImpl implements DoctorService {
         return dto;
     }
 
-
     private PrescriptionDTO convertToPrescriptionDto(Prescription prescription) {
         PrescriptionDTO dto = new PrescriptionDTO();
         dto.setId(prescription.getId());
@@ -193,21 +191,22 @@ public class DoctorServiceImpl implements DoctorService {
         return dto;
     }
 
-
-    //UPDATE THE appointment status
+    // UPDATE THE appointment status
     @Override
     @Transactional
-    public AppointmentDTO updateAppointmentStatus(Long id, UpdateStatusDTO status)  {
-        Appointment appointment=appointmentRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + id));
+    public AppointmentDTO updateAppointmentStatus(Long id, UpdateStatusDTO status) {
+        Appointment appointment = appointmentRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Appointment not found with id: " + id));
         appointment.setStatus(status.getStatus());
-        Appointment savedAppointment = appointmentRepo.save(appointment); 
+        Appointment savedAppointment = appointmentRepo.save(appointment);
 
         // in-app notification to patient
         notiService.createNotification(
-            appointment.getPatient().getUser().getId(),
-            "Your appointment status has been updated to: " + status.getStatus() + " by Dr. " + appointment.getDoctor().getFirstName() + " " + appointment.getDoctor().getLastName(),
-            appointment.getDoctor().getUser().getId(),
-            NotificationType.APPOINTMENT);
+                appointment.getPatient().getUser().getId(),
+                "Your appointment status has been updated to: " + status.getStatus() + " by Dr. "
+                        + appointment.getDoctor().getFirstName() + " " + appointment.getDoctor().getLastName(),
+                appointment.getDoctor().getUser().getId(),
+                NotificationType.APPOINTMENT);
 
         // email notification to patient
         SimpleMailMessage mail = new SimpleMailMessage();
@@ -222,8 +221,6 @@ public class DoctorServiceImpl implements DoctorService {
 
         return convertToAppointmentDto(savedAppointment);
     }
-
-
 
     @Override
     public List<PrescriptionDTO> getMyPrescriptions() {
@@ -245,7 +242,7 @@ public class DoctorServiceImpl implements DoctorService {
 
         Long doctorId = doctor.getId();
         List<Appointment> doctorAppointments = appointmentRepo.findByDoctorId(doctorId);
-        
+
         return doctorAppointments.stream()
                 .flatMap(appointment -> prescriptionRepo.findByAppointmentId(appointment.getId()).stream())
                 .map(this::convertToPrescriptionDtoWithPatient)
@@ -267,7 +264,4 @@ public class DoctorServiceImpl implements DoctorService {
         return dto;
     }
 
-    
-
-    
 }

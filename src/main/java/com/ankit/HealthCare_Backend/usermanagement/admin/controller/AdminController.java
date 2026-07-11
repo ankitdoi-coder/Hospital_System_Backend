@@ -2,10 +2,13 @@ package com.ankit.HealthCare_Backend.usermanagement.admin.controller;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,9 +42,12 @@ public class AdminController {
     @Operation(summary = "Get all doctors", description = "Returns all registered doctors including pending, approved and rejected ones")
     @ApiResponse(responseCode = "200", description = "Doctor list returned")
     @GetMapping("/doctors")
-    public ResponseEntity<List<DoctorDTO>> getAllDoctors() {
-        List<DoctorDTO> doctors = adminService.getAllDoctors();
-        return ResponseEntity.ok(doctors);
+    public ResponseEntity<Page<DoctorDTO>> getAllDoctors(
+        @RequestParam(defaultValue="0") int page,
+        @RequestParam(defaultValue="10") int size
+    ) {
+        
+        return ResponseEntity.ok(adminService.getAllDoctors(PageRequest.of(page, size)));
     }
 
     @Operation(summary = "Approve a doctor", description = "Approves a doctor account so they can login and accept appointments")
@@ -73,9 +79,11 @@ public class AdminController {
     @Operation(summary = "Get all patients", description = "Returns all registered patients")
     @ApiResponse(responseCode = "200", description = "Patient list returned")
     @GetMapping("/patients")
-    public ResponseEntity<List<PatientDTO>> getAllPatients() {
-        List<PatientDTO> patients = adminService.getAllPatients();
-        return ResponseEntity.ok(patients);
+    public ResponseEntity<Page<PatientDTO>> getAllPatients(
+        @RequestParam(defaultValue="0") int page,
+        @RequestParam(defaultValue="10") int size
+    ) {
+        return ResponseEntity.ok(adminService.getAllPatients(PageRequest.of(page, size)));
     }
 
     @Operation(summary = "Get all billing records", description = "Returns all billing records across all appointments")
