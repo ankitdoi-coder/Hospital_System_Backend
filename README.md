@@ -3,7 +3,7 @@
 # 🏥 Smart Healthcare System — Backend
 
 **A production-ready, secure, and scalable RESTful API** for a **Smart Healthcare Appointment & Records System**, built with **Java 17 + Spring Boot 3.5**.
-Implements real-world engineering practices including JWT-based auth, role-based access control, centralized exception handling, request validation, OAuth2 social login, **Razorpay payment gateway integration**, billing management, **Cloudinary-backed cloud file storage**, and automated API documentation.
+Implements real-world engineering practices including JWT-based auth, role-based access control, centralized exception handling, request validation, OAuth2 social login, **Razorpay payment gateway integration**, billing management, **Cloudinary-backed cloud file storage**, **server-side pagination**, and automated API documentation.
 
 [![Java](https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.7-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
@@ -52,6 +52,7 @@ I've recorded short walkthroughs breaking down some of the trickier features and
 | 🌐 **Google OAuth2 Social Login**            | Patients and doctors can sign in with Google via Spring OAuth2 client                                                                                                                                                  |
 | 💳 **Razorpay Payment Gateway**              | Real, verified online payments for appointment billing — UPI, Cards & Netbanking, with server-side signature verification                                                                                              |
 | ☁️ **Cloudinary Cloud Media Storage**        | Profile pictures uploaded via multipart requests are validated, streamed, and persisted to Cloudinary — no local disk dependency, fully production-portable                                                            |
+| 📄 **Server-Side Pagination**                | Every major list endpoint (Admin's Doctors/Patients/Billing, Doctor's Appointments/Patients, Patient's Doctors/Appointments/Prescriptions) accepts `page`/`size` query params and returns a Spring Data `Page<T>` instead of a full unbounded list |
 | 🛡️ **Global Exception Handler**              | `@RestControllerAdvice` catches all exceptions — validation, auth, not-found, duplicates — and returns consistent JSON error responses with timestamp                                                                  |
 | ✅ **Bean Validation**                       | `@Valid` + Jakarta Validation annotations (`@NotNull`, `@NotBlank`, `@Email`, `@Digits`) on all request DTOs                                                                                                           |
 | 🩺 **Doctor Approval Workflow**              | Doctors register but are locked out until an Admin approves their account                                                                                                                                              |
@@ -91,16 +92,16 @@ The codebase is organized by **domain modules** (feature-based packaging), not b
 
 ```
 com.ankit.HealthCare_Backend/
-├── appointment/          # Appointment booking, status updates
+├── appointment/          # Appointment booking, status updates, paginated repository queries
 ├── authentication/       # JWT, OAuth2, Security config, Auth endpoints
-├── billing/              # Billing records, payment, revenue stats, Razorpay integration
+├── billing/              # Billing records, payment, revenue stats, Razorpay integration, paginated billing list
 ├── communication/        # Contact Us feature
 ├── core/                 # Shared enums (AppointmentStatus, BillingStatus), Role entity
 ├── Exception/            # GlobalExceptionHandler + custom exceptions
 ├── filemanagement/       # Profile picture upload/retrieval, Cloudinary integration
 ├── Notification/         # Notification entity & repository
-├── prescription/         # Doctor prescriptions
-└── usermanagement/       # Admin, Doctor, Patient, User, Profile sub-modules
+├── prescription/         # Doctor prescriptions, paginated patient-facing query
+└── usermanagement/       # Admin, Doctor, Patient, User, Profile sub-modules — paginated list endpoints in Admin/Doctor/Patient controllers
 ```
 
 ---
@@ -120,6 +121,7 @@ com.ankit.HealthCare_Backend/
 ![Hibernate](https://img.shields.io/badge/ORM-JPA%2FHibernate-59666C?style=flat-square&logo=hibernate&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-8.3.0-4479A1?style=flat-square&logo=mysql&logoColor=white)
 ![Validation](https://img.shields.io/badge/Validation-Jakarta%20Bean-2396F3?style=flat-square&logo=hibernate&logoColor=white)
+![Pagination](https://img.shields.io/badge/Pagination-Spring%20Data%20Pageable-59666C?style=flat-square&logo=spring&logoColor=white)
 ![Swagger](https://img.shields.io/badge/API%20Docs-SpringDoc%20OpenAPI%202.5.0-85EA2D?style=flat-square&logo=swagger&logoColor=black)
 ![Maven](https://img.shields.io/badge/Build-Maven-C71A36?style=flat-square&logo=apachemaven&logoColor=white)
 ![Lombok](https://img.shields.io/badge/Utility-Lombok%201.18.32-BC0032?style=flat-square&logo=lombok&logoColor=white)
@@ -135,6 +137,7 @@ com.ankit.HealthCare_Backend/
 | Media Storage   | Cloudinary Java SDK                       | Latest stable  |
 | Email           | Spring Boot Starter Mail (JavaMailSender) | 3.5.7          |
 | ORM             | Spring Data JPA + Hibernate               | 3.5.7          |
+| Pagination      | Spring Data `Pageable` / `Page<T>`        | 3.5.7          |
 | Database        | MySQL (mysql-connector-j)                 | 8.3.0          |
 | Validation      | Spring Boot Starter Validation (Jakarta)  | 3.5.7          |
 | API Docs        | SpringDoc OpenAPI (Swagger UI)            | 2.5.0          |
@@ -191,6 +194,53 @@ Profile pictures for both **Patients** and **Doctors** are uploaded directly to 
 ```
 
 Because the upload is wrapped in `@Transactional`, a failure at any stage (invalid file, Cloudinary error, DB save error) rolls back cleanly rather than leaving a partially-updated profile.
+
+---
+
+## 📄 Server-Side Pagination
+
+Every list-returning endpoint that can grow unbounded — doctors, patients, appointments, prescriptions, and billing records — is backed by **Spring Data `Pageable`** instead of returning a full, unbounded `List<T>`. This keeps response payloads small and predictable regardless of how much data accumulates in production.
+
+### 📌 What's Implemented
+
+| Capability                                                                                     | Status        |
+| ------------------------------------------------------------------------------------------------ | ------------- |
+| `page` / `size` query params accepted on all major list endpoints                                | ✅ Implemented |
+| Responses shaped as Spring Data `Page<T>` (`content`, `totalElements`, `totalPages`, `number`, …) | ✅ Implemented |
+| Database-level pagination via `repository.findAll(Pageable)` / derived paginated query methods    | ✅ Implemented |
+| Role-scoped paginated queries (e.g. a patient's own appointments/prescriptions only)              | ✅ Implemented |
+| Sensible defaults (`page=0`, `size=10`) when query params are omitted                             | ✅ Implemented |
+
+### 🧠 Where It's Applied
+
+| Panel   | Endpoint                       | Paginated Query                                                    |
+| ------- | ------------------------------- | -------------------------------------------------------------------- |
+| Admin   | `GET /api/admin/doctors`        | `DoctorRepository.findAll(Pageable)`                                 |
+| Admin   | `GET /api/admin/patients`       | `PatientRepository.findAll(Pageable)`                                |
+| Admin   | `GET /api/admin/billing`        | `BillingRepository.findAllWithDetails(Pageable)`                     |
+| Doctor  | `GET /api/doctor/appointments/my` | `AppointmentRepository.findByDoctorId(Long, Pageable)`              |
+| Doctor  | `GET /api/doctor/patients`      | Paginated derivation from the doctor's own appointment records       |
+| Patient | `GET /api/patient/doctors`      | `DoctorRepository.findByIsApproved(boolean, Pageable)`                |
+| Patient | `GET /api/patient/appointments/my` | `AppointmentRepository.findByPatientId(Long, Pageable)`            |
+| Patient | `GET /api/patient/prescriptions`   | `PrescriptionRepository.findByAppointment_Patient_Id(Long, Pageable)` |
+
+### 🧾 Example Response Shape
+
+```json
+{
+  "content": [ { "id": 1, "firstName": "Ankit", "lastName": "Kumar Gurjar", "...": "..." } ],
+  "totalElements": 42,
+  "totalPages": 5,
+  "number": 0,
+  "size": 10,
+  "first": true,
+  "last": false,
+  "numberOfElements": 10,
+  "empty": false
+}
+```
+
+Pagination is handled entirely at the query level (`Pageable` pushed down into the repository), not by fetching a full table and slicing it in memory — so performance stays consistent as row counts grow.
 
 ---
 
@@ -304,6 +354,8 @@ Validation failures are caught by the Global Exception Handler and returned as s
 
 ## 📋 API Endpoints
 
+> 📄 Endpoints marked **(Paginated)** accept optional `page` (default `0`) and `size` (default `10`) query params and return a Spring Data `Page<T>` — see [📄 Server-Side Pagination](#-server-side-pagination) above for the response shape.
+
 ### 🔐 Auth — `/api/auth`
 | Method | Endpoint           | Description                                | Auth   |
 | ------ | ------------------ | ------------------------------------------ | ------ |
@@ -318,23 +370,23 @@ Validation failures are caught by the Global Exception Handler and returned as s
 ### 🧑‍⚕️ Patient — `/api/patient` _(ROLE_PATIENT)_
 | Method | Endpoint                    | Description                                                  |
 | ------ | --------------------------- | ------------------------------------------------------------ |
-| GET    | `/doctors`                  | Browse all approved doctors                                  |
+| GET    | `/doctors`                  | Browse all approved doctors **(Paginated)**                  |
 | POST   | `/appointments/new`         | Book a new appointment                                       |
-| GET    | `/appointments/my`          | View personal appointment history                            |
+| GET    | `/appointments/my`          | View personal appointment history **(Paginated)**            |
 | DELETE | `/appointments/{id}/cancel` | Cancel an appointment                                        |
 | PUT    | `/appointments/{id}/pay`    | Make payment for an appointment                              |
 | POST   | `/payments/create-order`    | Create a Razorpay order for an appointment                   |
 | POST   | `/payments/verify`          | Verify Razorpay payment signature and mark billing as `PAID` |
-| GET    | `/prescriptions`            | View personal prescriptions                                  |
+| GET    | `/prescriptions`            | View personal prescriptions **(Paginated)**                  |
 | GET    | `/profile`                  | View own patient profile (includes `profilePicture` URL)     |
 
 ### 👨‍⚕️ Doctor — `/api/doctor` _(ROLE_DOCTOR)_
 | Method | Endpoint                    | Description                                                       |
 | ------ | --------------------------- | ----------------------------------------------------------------- |
 | GET    | `/profile`                  | View own doctor profile (includes `profilePicture` URL)           |
-| GET    | `/appointments/my`          | View all own appointments                                         |
+| GET    | `/appointments/my`          | View all own appointments **(Paginated)**                         |
 | PUT    | `/appointments/{id}/status` | Update appointment status (triggers in-app + email notifications) |
-| GET    | `/patients`                 | View all own patients                                             |
+| GET    | `/patients`                 | View all own patients **(Paginated)**                             |
 | POST   | `/prescription`             | Create a prescription                                             |
 | GET    | `/prescriptions`            | View all own prescriptions                                        |
 
@@ -345,16 +397,16 @@ Validation failures are caught by the Global Exception Handler and returned as s
 | DELETE | `/delete-image` | Remove the current profile picture                                                                                                                                 |
 
 ### 🛠️ Admin — `/api/admin` _(ROLE_ADMIN)_
-| Method | Endpoint                | Description                         |
-| ------ | ----------------------- | ----------------------------------- |
-| GET    | `/doctors`              | Get all doctors (including pending) |
-| PUT    | `/doctors/{id}/approve` | Approve a doctor                    |
-| PUT    | `/doctors/{id}/reject`  | Reject / revoke a doctor            |
-| GET    | `/patients`             | Get all patients                    |
-| GET    | `/billing`              | View all billing records            |
-| PUT    | `/billing/{id}/status`  | Update a billing record's status    |
-| GET    | `/revenue/daily`        | Get today's total revenue           |
-| GET    | `/revenue/monthly`      | Get current month's total revenue   |
+| Method | Endpoint                | Description                                       |
+| ------ | ----------------------- | -------------------------------------------------- |
+| GET    | `/doctors`              | Get all doctors (including pending) **(Paginated)** |
+| PUT    | `/doctors/{id}/approve` | Approve a doctor                                   |
+| PUT    | `/doctors/{id}/reject`  | Reject / revoke a doctor                           |
+| GET    | `/patients`             | Get all patients **(Paginated)**                   |
+| GET    | `/billing`              | View all billing records **(Paginated)**           |
+| PUT    | `/billing/{id}/status`  | Update a billing record's status                   |
+| GET    | `/revenue/daily`        | Get today's total revenue                          |
+| GET    | `/revenue/monthly`      | Get current month's total revenue                  |
 
 ### 🔔 Notifications — `/api/notifications` _(ROLE_PATIENT / ROLE_DOCTOR)_
 | Method | Endpoint         | Description                                             |
@@ -385,6 +437,8 @@ Once running, the interactive Swagger UI is available at:
 ```
 http://localhost:8080/swagger-ui/index.html
 ```
+
+Paginated endpoints are documented with their `page`/`size` query parameters directly in Swagger's interactive "Try it out" panel.
 
 ---
 
@@ -499,6 +553,7 @@ This project was built to demonstrate practical, production-grade backend engine
 
 - 🔐 **Security-first payment handling** — billing status is never trusted from the client; it's gated behind server-side HMAC signature verification, mirroring real fintech/healthtech systems.
 - ☁️ **Stateless media handling** — profile pictures stream directly to Cloudinary rather than local disk, keeping the API instance-agnostic and production-portable from day one.
+- 📄 **Query-level pagination, not in-memory slicing** — every list endpoint that can grow unbounded pushes `Pageable` down into the repository layer, so response times stay flat as data volume grows instead of degrading with a full-table fetch.
 - 🪪 **Stateless, role-scoped JWT auth** with a proper OAuth2 social login path alongside it.
 - 🧩 **Consistent error contracts** across the entire API via a single global exception handler.
 - 🏗️ **Domain-driven package structure** that scales cleanly as features are added, rather than a flat MVC layout.

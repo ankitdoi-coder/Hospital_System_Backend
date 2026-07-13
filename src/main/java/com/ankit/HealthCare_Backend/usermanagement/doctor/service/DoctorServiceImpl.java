@@ -182,7 +182,7 @@ public class DoctorServiceImpl implements DoctorService {
         dto.setProfilePicture(patient.getProfilePicture());
         return dto;
         
-    }
+    }   
 
     private PrescriptionDTO convertToPrescriptionDto(Prescription prescription) {
         PrescriptionDTO dto = new PrescriptionDTO();
