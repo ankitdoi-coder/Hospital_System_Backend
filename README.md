@@ -3,11 +3,12 @@
 # 🏥 Smart Healthcare System — Backend
 
 **A production-ready, secure, and scalable RESTful API** for a **Smart Healthcare Appointment & Records System**, built with **Java 17 + Spring Boot 3.5**.
-Implements real-world engineering practices including JWT-based auth, role-based access control, centralized exception handling, request validation, OAuth2 social login, **Razorpay payment gateway integration**, billing management, **Cloudinary-backed cloud file storage**, **server-side pagination**, and automated API documentation.
+Implements real-world engineering practices including JWT-based auth with Redis-backed token revocation, role-based access control, centralized exception handling, request validation, OAuth2 social login, **Razorpay payment gateway integration**, billing management, **Cloudinary-backed cloud file storage**, **server-side pagination**, and automated API documentation.
 
 [![Java](https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.7-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![Spring Security](https://img.shields.io/badge/Spring%20Security-JWT-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white)](https://spring.io/projects/spring-security)
+[![Redis](https://img.shields.io/badge/Cache-Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
 [![MySQL](https://img.shields.io/badge/MySQL-8.3-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
 [![Maven](https://img.shields.io/badge/Maven-3.x-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)](https://maven.apache.org/)
 [![Swagger](https://img.shields.io/badge/API%20Docs-Swagger%2FOpenAPI-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)](https://swagger.io/)
@@ -48,6 +49,8 @@ I've recorded short walkthroughs breaking down some of the trickier features and
 | Feature                                     | Details                                                                                                                                                                                                                |
 | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 🔐 **JWT Auth + Role-Based Access**          | Stateless authentication with role-scoped endpoints (ADMIN / DOCTOR / PATIENT)                                                                                                                                         |
+| 🚪 **Redis-Backed Token Revocation**         | True server-side logout for stateless JWTs — a blacklisted token is rejected at the filter level even before its natural expiry, with the Redis key TTL matching the token's remaining lifetime exactly               |
+| ⚡ **Redis-Backed OTP Store**                 | Email verification OTPs live in Redis with native key expiry (`SETEX`) instead of a manually-expired MySQL table — no cleanup job, no stale rows                                                                       |
 | 📧 **Email OTP Verification**                | 6-digit OTP sent via email before registration; 10-minute expiry, single-use, auto-cleared on resend                                                                                                                   |
 | 🌐 **Google OAuth2 Social Login**            | Patients and doctors can sign in with Google via Spring OAuth2 client                                                                                                                                                  |
 | 💳 **Razorpay Payment Gateway**              | Real, verified online payments for appointment billing — UPI, Cards & Netbanking, with server-side signature verification                                                                                              |
@@ -64,7 +67,7 @@ I've recorded short walkthroughs breaking down some of the trickier features and
 | 📚 **Swagger / OpenAPI Docs**                | Auto-generated interactive API docs via SpringDoc OpenAPI 2.5                                                                                                                                                          |
 | 🌍 **CORS Configured**                       | Whitelisted for React frontend at `localhost:5173` and `localhost:3000` via `allowedOriginPatterns`, safely combined with credentialed requests                                                                        |
 | ⚡ **Stateless Sessions**                    | `SessionCreationPolicy.STATELESS` — no server-side session state                                                                                                                                                       |
-| 🏗️ **Auditing & Persistence Infrastructure** | `To maintain professional-grade data traceability, the system implements` — Utilizes `@MappedSuperclass` with `BaseAuditEntity` to eliminate boilerplate, ensuring consistent `created_at`, `updated_at`, `created_by` |
+| 🏗️ **Auditing & Persistence Infrastructure** | `@MappedSuperclass` with `BaseAuditEntity` eliminates boilerplate, ensuring consistent `created_at`, `updated_at`, `created_by`, `updated_by` across the schema                                                          |
 
 ---
 
@@ -82,10 +85,12 @@ To maintain professional-grade data traceability, the system implements **JPA Au
 
 ![Architecture Diagram](https://raw.githubusercontent.com/ankitdoi-coder/HealthCare-Backend/main/Requirements%20&%20Architecture/06_Architecture_workflow.png)
 
-Classic **3-tier layered architecture**:
+Classic **3-tier layered architecture**, with Redis sitting alongside MySQL as a second, purpose-built data store for short-lived state:
 
 ```
 Controller (REST API)  →  Service (Business Logic)  →  Repository (JPA / MySQL)
+                                    │
+                                    └──▶  RedisTemplate  →  Redis  (OTPs, JWT blacklist)
 ```
 
 The codebase is organized by **domain modules** (feature-based packaging), not by layer — keeping related code co-located and the project scalable.
@@ -93,10 +98,10 @@ The codebase is organized by **domain modules** (feature-based packaging), not b
 ```
 com.ankit.HealthCare_Backend/
 ├── appointment/          # Appointment booking, status updates, paginated repository queries
-├── authentication/       # JWT, OAuth2, Security config, Auth endpoints
+├── authentication/       # JWT + Redis blacklist, Redis-backed OTP, OAuth2, Security config
 ├── billing/              # Billing records, payment, revenue stats, Razorpay integration, paginated billing list
 ├── communication/        # Contact Us feature
-├── core/                 # Shared enums (AppointmentStatus, BillingStatus), Role entity
+├── core/                 # Shared enums (AppointmentStatus, BillingStatus), Role entity, RedisConfig
 ├── Exception/            # GlobalExceptionHandler + custom exceptions
 ├── filemanagement/       # Profile picture upload/retrieval, Cloudinary integration
 ├── Notification/         # Notification entity & repository
@@ -113,6 +118,7 @@ com.ankit.HealthCare_Backend/
 ![Java](https://img.shields.io/badge/Java-17-ED8B00?style=flat-square&logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.7-6DB33F?style=flat-square&logo=springboot&logoColor=white)
 ![Spring Security](https://img.shields.io/badge/Spring%20Security-6.5.7-6DB33F?style=flat-square&logo=springsecurity&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-Spring%20Data%20Redis-DC382D?style=flat-square&logo=redis&logoColor=white)
 ![JWT](https://img.shields.io/badge/JWT-jjwt%200.11.5-000000?style=flat-square&logo=jsonwebtokens&logoColor=white)
 ![OAuth2](https://img.shields.io/badge/OAuth2-Google-4285F4?style=flat-square&logo=google&logoColor=white)
 ![Razorpay](https://img.shields.io/badge/Razorpay-Java%20SDK-0C2451?style=flat-square&logo=razorpay&logoColor=white)
@@ -132,6 +138,7 @@ com.ankit.HealthCare_Backend/
 | --------------- | ----------------------------------------- | -------------- |
 | Framework       | Spring Boot                               | 3.5.7          |
 | Security        | Spring Security + JWT (jjwt)              | 6.5.7 / 0.11.5 |
+| In-Memory Store | Redis + Spring Data Redis (Lettuce client)| 3.5.7          |
 | Social Login    | Spring OAuth2 Client (Google)             | 6.5.7          |
 | Payment Gateway | Razorpay Java SDK                         | Latest stable  |
 | Media Storage   | Cloudinary Java SDK                       | Latest stable  |
@@ -150,19 +157,76 @@ com.ankit.HealthCare_Backend/
 ## 🔒 Security Implementation
 
 ```
-Request → JwtFilter → Validate Token → Set SecurityContext → @PreAuthorize / hasRole()
+Request → JwtFilter → Redis blacklist check → Validate signature/expiry → Set SecurityContext → @PreAuthorize / hasRole()
 ```
 
 1. **Registration** — `POST /api/auth/register` with full Bean Validation (`@Valid`)
 2. **Login** — `POST /api/auth/login` returns a signed JWT; doctors blocked until approved
 3. **Google OAuth2** — `/oauth2/**` flow handled by `OAuth2LoginSuccessHandler`, redirects with token
-4. **JWT Filter** — `JwtFilter` intercepts every request, validates signature & expiry
-5. **Role Guards** — `/api/patient/**` → `ROLE_PATIENT`, `/api/doctor/**` → `ROLE_DOCTOR`, `/api/admin/**` → `ROLE_ADMIN`, `/api/profile/**` → `ROLE_PATIENT` **or** `ROLE_DOCTOR` via `hasAnyRole`
-6. **Email OTP** — `POST /api/auth/send-otp` sends a 6-digit OTP; `POST /api/auth/verify-otp` validates it before allowing registration
-7. **Password Reset** — Secure time-limited token flow via `POST /api/auth/forgot-password` → `POST /api/auth/reset-password`
-8. **BCrypt** — All passwords hashed with `BCryptPasswordEncoder`
-9. **Payment Signature Verification** — Every Razorpay payment is verified server-side via HMAC signature before billing status changes — the client can never self-report a payment as successful
-10. **Credential-Safe CORS** — `CorsConfigurationSource` uses `allowedOriginPatterns` (never a bare `"*"`) so credentialed requests (JWT-bearing) from the frontend are honored without violating the CORS spec
+4. **JWT Filter** — `JwtFilter` intercepts every request, checks the Redis blacklist first, then validates signature & expiry
+5. **Logout / Revocation** — `POST /api/auth/logout` blacklists the presented token in Redis for its remaining lifetime (see [🧠 Redis Integration](#-redis-integration) below)
+6. **Role Guards** — `/api/patient/**` → `ROLE_PATIENT`, `/api/doctor/**` → `ROLE_DOCTOR`, `/api/admin/**` → `ROLE_ADMIN`, `/api/profile/**` → `ROLE_PATIENT` **or** `ROLE_DOCTOR` via `hasAnyRole`
+7. **Email OTP** — `POST /api/auth/send-otp` sends a 6-digit OTP stored in Redis; `POST /api/auth/verify-otp` validates it before allowing registration
+8. **Password Reset** — Secure time-limited token flow via `POST /api/auth/forgot-password` → `POST /api/auth/reset-password`
+9. **BCrypt** — All passwords hashed with `BCryptPasswordEncoder`
+10. **Payment Signature Verification** — Every Razorpay payment is verified server-side via HMAC signature before billing status changes — the client can never self-report a payment as successful
+11. **Credential-Safe CORS** — `CorsConfigurationSource` uses `allowedOriginPatterns` (never a bare `"*"`) so credentialed requests (JWT-bearing) from the frontend are honored without violating the CORS spec
+
+---
+
+## 🧠 Redis Integration
+
+Redis was introduced to solve two problems a relational database handles poorly: **data that must expire on its own**, and **a fast existence check that has to run on every single authenticated request**. Both OTPs and the JWT blacklist fit that profile, so both moved off MySQL and onto Redis.
+
+### 📌 Why Redis, and why these two features specifically
+
+| Problem (before)                                                                                     | Why MySQL was a poor fit                                                                                  | Redis fix                                                                 |
+| ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| OTPs stored in an `email_otps` table with an `expiryTime` column, checked manually on every verify call | Expiry had to be enforced in application code (`expiryTime.isAfter(now)`); expired/unverified rows never got cleaned up without a separate scheduled job | Redis `SETEX` gives the key a TTL natively — it's simply gone when it expires, no cleanup job needed |
+| Stateless JWTs have no logout — the only way to "log out" was to delete the token client-side, while the token itself stayed valid on the server until it naturally expired | JWTs are stateless by design; adding revocation state to MySQL would mean an extra table hit checked on every protected request | A blacklisted token's ID is stored as a Redis key with a TTL equal to its remaining lifetime — an O(1) in-memory lookup on every request, self-cleaning by design |
+
+### 🔧 What's actually implemented
+
+**1. Configuration** — `core/config/RedisConfig.java` defines a single `RedisTemplate<String, String>` bean (`StringRedisSerializer` for both key and value, since every value stored is a simple string — an OTP, a `"true"` flag, or a token marker — not a serialized object).
+
+**2. Redis-backed OTP store** — `authentication/service/EmailOtpService.java`
+```java
+redisTemplate.opsForValue().set(otpKey(email), otp, Duration.ofMinutes(otpExpiryMinutes));
+redisTemplate.delete(verifiedKey(email));
+```
+- Key pattern: `otp:<email>` for the OTP itself, `otp:verified:<email>` for the post-verification flag
+- Sending a new OTP clears any stale `verified` flag from a prior attempt, so a resend always requires verifying the *new* code — the account can't be created off the back of an old, already-consumed verification
+- `verifyOtp()` deletes the OTP key on successful match (one-time use) and sets the `verified` flag with a slightly longer TTL than the OTP itself, giving the user a window to finish the registration form after verifying without needing to re-verify
+
+**3. Redis-backed JWT blacklist / logout** — `authentication/security/JwtService.java`
+```java
+public void blacklistToken(String token) {
+    long remainingMs = getExpirationFromToken(token).getTime() - System.currentTimeMillis();
+    if (remainingMs > 0) {
+        redisTemplate.opsForValue().set("blacklist:" + token, "true", Duration.ofMillis(remainingMs));
+    }
+}
+
+public boolean isTokenBlacklisted(String token) {
+    return Boolean.TRUE.equals(redisTemplate.hasKey("blacklist:" + token));
+}
+```
+- `POST /api/auth/logout` calls `blacklistToken()`, keyed by the token itself, with a TTL set to **exactly** the token's remaining lifetime — once it would have expired naturally anyway, Redis discards the key on its own, so the blacklist never accumulates stale entries
+- `JwtFilter` checks `isTokenBlacklisted()` **before** signature/expiry validation on every request — a logged-out token is rejected immediately with `401`, even if it hasn't reached its original expiry time
+
+### ✅ Result
+
+- Logout is now a real, server-enforced action, not just a client-side `localStorage` clear — a captured or leaked token stops working the moment the legitimate user logs out
+- OTP expiry and cleanup are handled entirely by Redis's own TTL mechanism — zero custom expiry-checking or scheduled-cleanup code left in the OTP service
+- Both features run as simple key/value operations (`SET`, `GET`, `DEL`, `EXISTS` with TTL) — no Redis data structures beyond strings were needed for either use case
+
+### 🧩 Where It's Applied
+
+| Feature              | Redis Key Pattern       | TTL                                     | Backing Class                        |
+| --------------------- | ------------------------ | ----------------------------------------- | --------------------------------------- |
+| OTP verification      | `otp:<email>`            | `app.otp.expiry-minutes` (default 10)     | `EmailOtpService`                        |
+| Post-verify flag      | `otp:verified:<email>`   | OTP expiry + 15 minutes                    | `EmailOtpService`                        |
+| JWT logout/blacklist  | `blacklist:<jwt>`        | Exactly the token's remaining lifetime     | `JwtService` / checked in `JwtFilter`     |
 
 ---
 
@@ -357,15 +421,16 @@ Validation failures are caught by the Global Exception Handler and returned as s
 > 📄 Endpoints marked **(Paginated)** accept optional `page` (default `0`) and `size` (default `10`) query params and return a Spring Data `Page<T>` — see [📄 Server-Side Pagination](#-server-side-pagination) above for the response shape.
 
 ### 🔐 Auth — `/api/auth`
-| Method | Endpoint           | Description                                | Auth   |
-| ------ | ------------------ | ------------------------------------------ | ------ |
-| POST   | `/send-otp`        | Send 6-digit OTP to email for verification | Public |
-| POST   | `/verify-otp`      | Verify the OTP before registration         | Public |
-| POST   | `/register`        | Register a new user (Patient/Doctor)       | Public |
-| POST   | `/login`           | Authenticate and receive JWT               | Public |
-| POST   | `/forgot-password` | Request a password reset token             | Public |
-| POST   | `/reset-password`  | Reset password using token                 | Public |
-| GET    | `/oauth2/callback` | Google OAuth2 redirect handler             | Public |
+| Method | Endpoint           | Description                                          | Auth   |
+| ------ | ------------------ | ----------------------------------------------------- | ------ |
+| POST   | `/send-otp`        | Send 6-digit OTP to email, stored in Redis            | Public |
+| POST   | `/verify-otp`      | Verify the Redis-stored OTP before registration       | Public |
+| POST   | `/register`        | Register a new user (Patient/Doctor)                  | Public |
+| POST   | `/login`           | Authenticate and receive JWT                          | Public |
+| POST   | `/logout`          | Blacklist the current JWT in Redis, invalidating it immediately | Authenticated |
+| POST   | `/forgot-password` | Request a password reset token                        | Public |
+| POST   | `/reset-password`  | Reset password using token                             | Public |
+| GET    | `/oauth2/callback` | Google OAuth2 redirect handler                         | Public |
 
 ### 🧑‍⚕️ Patient — `/api/patient` _(ROLE_PATIENT)_
 | Method | Endpoint                    | Description                                                  |
@@ -428,6 +493,8 @@ Core entities: `User`, `Role`, `Patient`, `Doctor`, `Admin`, `Appointment`, `Pre
 
 `Patient` and `Doctor` each store a `profilePicture` column holding the Cloudinary-hosted CDN URL of the user's uploaded profile image.
 
+> Note: OTPs and the JWT blacklist are intentionally **not** part of this relational schema — they live in Redis as short-lived keys, not MySQL rows, since neither needs to survive past its own expiry.
+
 ---
 
 ## 📖 API Documentation (Swagger)
@@ -448,6 +515,7 @@ Paginated endpoints are documented with their `page`/`size` query parameters dir
 - Java 17+
 - Maven 3.x
 - MySQL 8.x
+- Redis 7.x (local install, or a managed free tier such as Upstash/Redis Cloud)
 - A Razorpay account (Test Mode keys are free — no business verification needed to start testing)
 - A Cloudinary account (free tier is sufficient for development)
 
@@ -463,11 +531,20 @@ Create the database:
 CREATE DATABASE healthcaredb;
 ```
 
+Confirm Redis is reachable:
+```bash
+redis-cli ping
+# should return: PONG
+```
+
 Configure `src/main/resources/application.properties`:
 ```properties
 spring.datasource.url=${DB_URL}
 spring.datasource.username=${DB_USERNAME}
 spring.datasource.password=${DB_PASSWORD}
+spring.data.redis.host=${REDIS_HOST:localhost}
+spring.data.redis.port=${REDIS_PORT:6379}
+spring.data.redis.password=${REDIS_PASSWORD:}
 app.jwt.secret=${JWT_SECRET}
 app.jwt.expiration=${JWT_EXPIRATION_MS}
 razorpay.key.id=${RAZORPAY_KEY_ID}
@@ -489,17 +566,20 @@ Server starts at `http://localhost:8080`
 ## 🔧 Environment Variables
 
 | Variable                | Description                            | Example                                    |
-| ----------------------- | -------------------------------------- | ------------------------------------------ |
-| `DB_URL`                | JDBC connection URL                    | `jdbc:mysql://localhost:3306/healthcaredb` |
-| `DB_USERNAME`           | Database username                      | `root`                                     |
-| `DB_PASSWORD`           | Database password                      | `your_password`                            |
-| `JWT_SECRET`            | Secret key for signing JWTs            | `a-very-long-random-secret-key`            |
-| `JWT_EXPIRATION_MS`     | Token TTL in milliseconds              | `86400000` (24h)                           |
-| `RAZORPAY_KEY_ID`       | Razorpay API Key ID (test or live)     | `rzp_test_xxxxxxxxxxxx`                    |
-| `RAZORPAY_KEY_SECRET`   | Razorpay API Key Secret (test or live) | `your_razorpay_key_secret`                 |
-| `CLOUDINARY_CLOUD_NAME` | Cloudinary account cloud name          | `your_cloud_name`                          |
-| `CLOUDINARY_API_KEY`    | Cloudinary API key                     | `123456789012345`                          |
-| `CLOUDINARY_API_SECRET` | Cloudinary API secret                  | `your_cloudinary_secret`                   |
+| ----------------------- | --------------------------------------- | ------------------------------------------ |
+| `DB_URL`                | JDBC connection URL                     | `jdbc:mysql://localhost:3306/healthcaredb` |
+| `DB_USERNAME`           | Database username                       | `root`                                     |
+| `DB_PASSWORD`           | Database password                       | `your_password`                            |
+| `REDIS_HOST`            | Redis host                              | `localhost`                                |
+| `REDIS_PORT`            | Redis port                              | `6379`                                     |
+| `REDIS_PASSWORD`        | Redis password (blank for local dev)    | *(empty)*                                  |
+| `JWT_SECRET`            | Secret key for signing JWTs             | `a-very-long-random-secret-key`            |
+| `JWT_EXPIRATION_MS`     | Token TTL in milliseconds               | `86400000` (24h)                           |
+| `RAZORPAY_KEY_ID`       | Razorpay API Key ID (test or live)      | `rzp_test_xxxxxxxxxxxx`                    |
+| `RAZORPAY_KEY_SECRET`   | Razorpay API Key Secret (test or live)  | `your_razorpay_key_secret`                 |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary account cloud name           | `your_cloud_name`                          |
+| `CLOUDINARY_API_KEY`    | Cloudinary API key                      | `123456789012345`                          |
+| `CLOUDINARY_API_SECRET` | Cloudinary API secret                   | `your_cloudinary_secret`                   |
 
 ---
 
@@ -551,7 +631,9 @@ Patients and doctors can:
 
 This project was built to demonstrate practical, production-grade backend engineering rather than tutorial-level CRUD:
 
+- 🧠 **Redis used for the right reasons, not for its own sake** — introduced specifically for self-expiring data (OTPs) and a revocation check that has to run on every request (JWT blacklist), rather than caching data that didn't need it.
 - 🔐 **Security-first payment handling** — billing status is never trusted from the client; it's gated behind server-side HMAC signature verification, mirroring real fintech/healthtech systems.
+- 🚪 **Real logout for stateless JWTs** — a token can be revoked before its natural expiry, closing the gap that pure client-side logout leaves open.
 - ☁️ **Stateless media handling** — profile pictures stream directly to Cloudinary rather than local disk, keeping the API instance-agnostic and production-portable from day one.
 - 📄 **Query-level pagination, not in-memory slicing** — every list endpoint that can grow unbounded pushes `Pageable` down into the repository layer, so response times stay flat as data volume grows instead of degrading with a full-table fetch.
 - 🪪 **Stateless, role-scoped JWT auth** with a proper OAuth2 social login path alongside it.
@@ -570,6 +652,6 @@ This project was built to demonstrate practical, production-grade backend engine
 
 [![GitHub](https://img.shields.io/badge/GitHub-ankitdoi--coder-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/ankitdoi-coder)
 
-💼 *Open to Java Full Stack / Backend / Frontend opportunities. Feel free to connect!*
+💼 *Open to Java Full Stack / Backend  opportunities. Feel free to connect!*
 
 </div>
