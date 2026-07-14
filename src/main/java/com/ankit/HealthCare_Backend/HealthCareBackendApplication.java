@@ -17,7 +17,7 @@ public class HealthCareBackendApplication {
         
         try {
             // ignoreIfMissing() hata diya taaki real error samne aaye
-            Dotenv dotenv = Dotenv.configure().directory("./HealthCare-Backend").load();
+            Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
             System.out.println("✅ SUCCESS: .env file properly load ho gayi hai!");
             
             dotenv.entries().forEach(e -> {

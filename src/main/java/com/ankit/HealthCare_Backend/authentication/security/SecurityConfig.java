@@ -26,7 +26,7 @@ import com.ankit.HealthCare_Backend.usermanagement.user.service.UserDetailsServi
 
 import lombok.RequiredArgsConstructor;
 
-@Configuration
+@Configuration(proxyBeanMethods = false) 
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {

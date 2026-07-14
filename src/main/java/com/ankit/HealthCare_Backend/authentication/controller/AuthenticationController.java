@@ -25,6 +25,7 @@ import com.ankit.HealthCare_Backend.authentication.service.EmailOtpService;
 import com.ankit.HealthCare_Backend.shared.dto.MessageResponseDTO;
 import com.ankit.HealthCare_Backend.authentication.service.AuthService;
 import com.ankit.HealthCare_Backend.authentication.dto.*;
+import com.ankit.HealthCare_Backend.authentication.security.JwtService;
 
 @Tag(name = "Authentication", description = "Register, Login, OTP verification, Password reset and OAuth2 endpoints")
 @RestController
@@ -33,6 +34,7 @@ import com.ankit.HealthCare_Backend.authentication.dto.*;
 public class AuthenticationController {
     private final AuthService authService;
     private final EmailOtpService emailOtpService;
+    private final JwtService jwtService;
 
     @Operation(summary = "Send OTP to email", description = "Sends a 6-digit OTP to the given email before registration")
     @ApiResponses({
@@ -131,7 +133,7 @@ public class AuthenticationController {
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@RequestHeader("Authorization") String authHeader) {
         String token = authHeader.replace("Bearer ", "");
-        authService.blacklistToken(token);
+        jwtService.blacklistToken(token);
         return ResponseEntity.ok().build();
     }
 }

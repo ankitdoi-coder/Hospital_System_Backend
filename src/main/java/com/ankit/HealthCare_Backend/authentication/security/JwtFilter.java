@@ -48,6 +48,13 @@ public class JwtFilter extends OncePerRequestFilter {
         // Cuts off the "Bearer " part and keeps only the actual token.
         final String jwt = authHeader.substring(7);
 
+        // The Bouncer checks the Banned List (Redis)
+        if (jwtService.isTokenBlacklisted(jwt)) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("User is logged out / Token is blacklisted");
+            return; // Stop the request right here. Do not pass to filterChain!
+        }
+
         // Uses the JwtService to read the sub claim (username/email) from the token.
         final String userEmail = jwtService.extractUsername(jwt);
 
