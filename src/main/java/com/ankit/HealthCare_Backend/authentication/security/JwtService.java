@@ -6,6 +6,9 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -15,15 +18,18 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class JwtService {
 
     // The SECRET_KEY is injected from our AppProperties
     private final String SECRET_KEY;
     private final long EXPIRATION_MS;
+    private final RedisTemplate<String, String> redisTemplate;
 
-    public JwtService(AppProperties appProperties) {
+    public JwtService(AppProperties appProperties, RedisTemplate<String, String> redisTemplate) {
         this.SECRET_KEY = appProperties.getJwt().getSecret();
         this.EXPIRATION_MS = appProperties.getJwt().getExpirationMs();
+        this.redisTemplate = redisTemplate;
     }
 
     // find the username from the token
@@ -51,6 +57,18 @@ public class JwtService {
         return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
     }
 
+    // black list the token
+    public void blacklistToken(String token) {
+        long remainingMs = getExpirationFromToken(token).getTime() - System.currentTimeMillis();
+        if (remainingMs > 0) {
+            redisTemplate.opsForValue().set("blacklist:" + token, "true", Duration.ofMillis(remainingMs));
+        }
+    }
+
+    public boolean isTokenBlacklisted(String token) {
+        return Boolean.TRUE.equals(redisTemplate.hasKey("blacklist:" + token));
+    }
+
     // matches the current time with the expiration time
     private boolean isTokenExpired(String token) {
         return extractClaim(token, Claims::getExpiration).before(new Date());
@@ -71,4 +89,9 @@ public class JwtService {
         byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
         return Keys.hmacShaKeyFor(keyBytes);
     }
+
+    public Date getExpirationFromToken(String token) {
+        return extractClaim(token, Claims::getExpiration);
+    }
+
 }

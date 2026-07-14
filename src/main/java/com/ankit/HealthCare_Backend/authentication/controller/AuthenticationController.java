@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,12 +34,10 @@ public class AuthenticationController {
     private final AuthService authService;
     private final EmailOtpService emailOtpService;
 
-
-    
     @Operation(summary = "Send OTP to email", description = "Sends a 6-digit OTP to the given email before registration")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "OTP sent successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid or missing email")
+            @ApiResponse(responseCode = "200", description = "OTP sent successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid or missing email")
     })
     @PostMapping("/send-otp")
     public ResponseEntity<MessageResponseDTO> sendOtp(@Valid @RequestBody OtpRequestDTO request) {
@@ -48,8 +47,8 @@ public class AuthenticationController {
 
     @Operation(summary = "Verify OTP", description = "Verifies the OTP entered by the user. OTP expires after configured minutes")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Email verified successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid or expired OTP")
+            @ApiResponse(responseCode = "200", description = "Email verified successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid or expired OTP")
     })
     @PostMapping("/verify-otp")
     public ResponseEntity<MessageResponseDTO> verifyOtp(@Valid @RequestBody OtpVerifyDTO request) {
@@ -62,8 +61,8 @@ public class AuthenticationController {
 
     @Operation(summary = "Register a new user", description = "Registers a new Patient or Doctor. roleId: 2 = Patient, 3 = Doctor. Doctor accounts require admin approval before login")
     @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "User registered successfully"),
-        @ApiResponse(responseCode = "400", description = "Validation error or email already exists")
+            @ApiResponse(responseCode = "201", description = "User registered successfully"),
+            @ApiResponse(responseCode = "400", description = "Validation error or email already exists")
     })
     @PostMapping("/register")
     public ResponseEntity<UserResponseDTO> register(@Valid @RequestBody RegisterRequestDTO registerRequest) {
@@ -73,9 +72,9 @@ public class AuthenticationController {
 
     @Operation(summary = "Login", description = "Authenticates user with email and password. Returns a JWT token to use in the Authorize button above")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Login successful, JWT token returned"),
-        @ApiResponse(responseCode = "401", description = "Invalid credentials"),
-        @ApiResponse(responseCode = "403", description = "Doctor account not yet approved by admin")
+            @ApiResponse(responseCode = "200", description = "Login successful, JWT token returned"),
+            @ApiResponse(responseCode = "401", description = "Invalid credentials"),
+            @ApiResponse(responseCode = "403", description = "Doctor account not yet approved by admin")
     })
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDTO> login(@Valid @RequestBody LoginRequestDTO loginRequest) {
@@ -84,8 +83,8 @@ public class AuthenticationController {
 
     @Operation(summary = "Forgot password", description = "Sends a password reset link to the registered email")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Reset link sent to email"),
-        @ApiResponse(responseCode = "404", description = "Email not found")
+            @ApiResponse(responseCode = "200", description = "Reset link sent to email"),
+            @ApiResponse(responseCode = "404", description = "Email not found")
     })
     @PostMapping("/forgot-password")
     public ResponseEntity<MessageResponseDTO> forgotPassword(@Valid @RequestBody ForgotPasswordRequestDTO request) {
@@ -95,8 +94,8 @@ public class AuthenticationController {
 
     @Operation(summary = "Reset password", description = "Resets the password using the token received in the reset email")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Password reset successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid or expired reset token")
+            @ApiResponse(responseCode = "200", description = "Password reset successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid or expired reset token")
     })
     @PostMapping("/reset-password")
     public ResponseEntity<MessageResponseDTO> resetPassword(@Valid @RequestBody ResetPasswordRequestDTO request) {
@@ -106,7 +105,7 @@ public class AuthenticationController {
 
     @Operation(summary = "Verify reset token", description = "Checks if the password reset token is still valid before showing the reset form")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Returns true if token is valid, false if expired")
+            @ApiResponse(responseCode = "200", description = "Returns true if token is valid, false if expired")
     })
     @PostMapping("/verify-reset-token")
     public ResponseEntity<Boolean> verifyResetToken(@Valid @RequestBody VerifyResetTokenRequestDTO request) {
@@ -126,5 +125,13 @@ public class AuthenticationController {
     @GetMapping("/oauth2/error")
     public void oauthError(HttpServletResponse response) throws IOException {
         response.sendRedirect("http://localhost:5173/login?error=OAUTH_FAILED");
+    }
+
+    @Operation(summary = " JWT logout via blacklist")
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.replace("Bearer ", "");
+        authService.blacklistToken(token);
+        return ResponseEntity.ok().build();
     }
 }
