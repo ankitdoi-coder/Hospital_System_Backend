@@ -58,6 +58,7 @@ public class JwtFilter extends OncePerRequestFilter {
         // Uses the JwtService to read the sub claim (username/email) from the token.
         final String userEmail = jwtService.extractUsername(jwt);
 
+        
         // Two checks before authenticating
         // Is there a username inside the token?
         // Has Spring Security already authenticated this request? (avoid duplicate work)

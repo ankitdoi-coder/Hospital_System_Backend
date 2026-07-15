@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import com.ankit.HealthCare_Backend.billing.dto.BillingDTO;
+import com.ankit.HealthCare_Backend.communication.dto.contactusDto;
 import com.ankit.HealthCare_Backend.usermanagement.doctor.dto.DoctorDTO;
 import com.ankit.HealthCare_Backend.usermanagement.patient.dto.PatientDTO;
 
@@ -20,4 +21,5 @@ public interface AdminService {
     BillingDTO updateBillingStatus(Long id, String status);
     Integer getDailyRevenue();
     Integer getMonthlyRevenue();
+    Page<contactusDto> getAllEnquries(Pageable pageable);
 }

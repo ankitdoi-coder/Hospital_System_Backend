@@ -12,6 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ankit.HealthCare_Backend.billing.dto.BillingDTO;
 import com.ankit.HealthCare_Backend.billing.entity.Billing;
 import com.ankit.HealthCare_Backend.billing.repository.BillingRepository;
+import com.ankit.HealthCare_Backend.communication.dto.contactusDto;
+import com.ankit.HealthCare_Backend.communication.entity.ContactUs;
+import com.ankit.HealthCare_Backend.communication.repository.ContactUsRepository;
 import com.ankit.HealthCare_Backend.core.enums.BillingStatus;
 import com.ankit.HealthCare_Backend.Exception.ResourceNotFoundException;
 import com.ankit.HealthCare_Backend.usermanagement.doctor.dto.DoctorDTO;
@@ -21,18 +24,21 @@ import com.ankit.HealthCare_Backend.usermanagement.patient.dto.PatientDTO;
 import com.ankit.HealthCare_Backend.usermanagement.patient.entity.Patient;
 import com.ankit.HealthCare_Backend.usermanagement.patient.repository.PatientRepository;
 
+import lombok.RequiredArgsConstructor;
+
 import java.time.LocalDate;
 
 @Service
+@RequiredArgsConstructor
 public class AdminServiceImpl implements AdminService {
 
-    @Autowired
-    private DoctorRepository doctorRepo;
-    @Autowired
-    private PatientRepository patientRepo;
-    
-    @Autowired
-    private BillingRepository billingRepo;
+    private final DoctorRepository doctorRepo;
+
+    private final PatientRepository patientRepo;
+
+    private final BillingRepository billingRepo;
+
+    private final ContactUsRepository contactUsRepository;
 
     // get the list of the doctors
     @Override
@@ -117,7 +123,7 @@ public class AdminServiceImpl implements AdminService {
         BillingStatus billingStatus = BillingStatus.valueOf(cleanStatus);
         Billing billing = billingRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Billing not found with id: " + id));
-        
+
         billing.setBilling_status(billingStatus);
         Billing savedBilling = billingRepo.save(billing);
         return convertToBillingDto(savedBilling);
@@ -148,4 +154,21 @@ public class AdminServiceImpl implements AdminService {
         dto.setBillingStatus(billing.getBilling_status());
         return dto;
     }
+
+    @Override
+    public Page<contactusDto> getAllEnquries(Pageable pageable) {
+        Page<ContactUs> enquries = contactUsRepository.findAll(pageable);
+        return enquries.map(this::convertToContactUsDto);
+    }
+
+    public contactusDto convertToContactUsDto(ContactUs contactUs) {
+        contactusDto dto = new contactusDto();
+        dto.setId(contactUs.getId());
+        dto.setName(contactUs.getName());
+        dto.setEmail(contactUs.getEmail());
+        dto.setMessage(contactUs.getMessage());
+        dto.setSubject(contactUs.getSubject());
+        return dto;
+    }
+
 }

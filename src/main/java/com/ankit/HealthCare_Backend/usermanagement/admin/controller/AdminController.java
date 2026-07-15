@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import com.ankit.HealthCare_Backend.billing.dto.BillingDTO;
+import com.ankit.HealthCare_Backend.communication.dto.contactusDto;
 import com.ankit.HealthCare_Backend.usermanagement.admin.service.AdminService;
 import com.ankit.HealthCare_Backend.usermanagement.doctor.dto.DoctorDTO;
 import com.ankit.HealthCare_Backend.usermanagement.patient.dto.PatientDTO;
@@ -123,4 +124,14 @@ public class AdminController {
         Integer revenue = adminService.getMonthlyRevenue();
         return ResponseEntity.ok(revenue);
     }
+    @Operation(summary = "Get contactus Enquirey Data", description = "Returns the data for contact us")
+    @ApiResponse(responseCode = "200", description = "all data of contact us")
+    @GetMapping("/enquries")
+    public ResponseEntity<Page<contactusDto>> getEnquries(
+        @RequestParam(defaultValue="0") int page,
+        @RequestParam(defaultValue="10") int size
+    ) {
+        return ResponseEntity.ok(adminService.getAllEnquries(PageRequest.of(page, size)));
+    }
+    
 }
