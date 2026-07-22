@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Map;
 
+
 @RestControllerAdvice
 public class GlobalExceptionHadler {
 
@@ -54,23 +55,24 @@ public class GlobalExceptionHadler {
         return buildResponse("An unexpected error occurred: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    // chat Bot exception
+    @ExceptionHandler(ChatbotServiceException.class)
+    public ResponseEntity<Map<String, Object>> handleChatbotError(ChatbotServiceException ex) {
+        return buildResponse(ex.getMessage(), HttpStatus.SERVICE_UNAVAILABLE);
+    }
 
-
-    //validator exception handler
+    // validator exception handler
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidatorError(MethodArgumentNotValidException ex){
+    public ResponseEntity<Map<String, Object>> handleValidatorError(MethodArgumentNotValidException ex) {
         return buildResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
-
     private ResponseEntity<Map<String, Object>> buildResponse(String message, HttpStatus status) {
         return new ResponseEntity<>(
-            Map.of(
-                "timestamp", LocalDateTime.now().toString(),
-                "message", message,
-                "status", status.value()
-            ),
-            status
-        );
+                Map.of(
+                        "timestamp", LocalDateTime.now().toString(),
+                        "message", message,
+                        "status", status.value()),
+                status);
     }
 }
