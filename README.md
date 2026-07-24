@@ -3,7 +3,7 @@
 # 🏥 Smart Healthcare System — Backend
 
 **A production-ready, secure, and scalable RESTful API** for a **Smart Healthcare Appointment & Records System**, built with **Java 17 + Spring Boot 3.5**.
-Implements real-world engineering practices including JWT-based auth with Redis-backed token revocation, role-based access control, centralized exception handling, request validation, OAuth2 social login, **Razorpay payment gateway integration**, billing management, **Cloudinary-backed cloud file storage**, **server-side pagination**, and automated API documentation.
+Implements real-world engineering practices including JWT-based auth with Redis-backed token revocation, role-based access control, centralized exception handling, request validation, OAuth2 social login, **Razorpay payment gateway integration**, billing management, **Cloudinary-backed cloud file storage**, **server-side pagination**, an **AI Health Assistant chatbot powered by Groq LLM**, and automated API documentation.
 
 [![Java](https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.7-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
@@ -14,6 +14,7 @@ Implements real-world engineering practices including JWT-based auth with Redis-
 [![Swagger](https://img.shields.io/badge/API%20Docs-Swagger%2FOpenAPI-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)](https://swagger.io/)
 [![Razorpay](https://img.shields.io/badge/Payments-Razorpay-0C2451?style=for-the-badge&logo=razorpay&logoColor=white)](https://razorpay.com/)
 [![Cloudinary](https://img.shields.io/badge/Media%20Storage-Cloudinary-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white)](https://cloudinary.com/)
+[![Groq](https://img.shields.io/badge/AI%20Chatbot-Groq%20LLM-F55036?style=for-the-badge&logo=OpenAI&logoColor=white)](https://groq.com/)
 
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](#)
 [![Build](https://img.shields.io/badge/Build-Passing-brightgreen.svg?style=flat-square)](#)
@@ -33,6 +34,7 @@ I've recorded short walkthroughs breaking down some of the trickier features and
 | #   | Topic                                                  | Link                                                        |
 | --- | ------------------------------------------------------ | ----------------------------------------------------------- |
 | 1   | 🔔 Notification Feature — Overview                      | [▶ Watch](https://youtu.be/mJa_I60yNYk?si=jBbiUTr2HLxPM4bt) |
+| 1   | 💳 Razorpay Payment Integration                         | [▶ Watch](https://youtu.be/6NOu717mixw?si=9sxa-SWaxC-5KN6G) |
 | 2   | 🧩 Notification Feature — Service & Repository Layer    | [▶ Watch](https://youtu.be/Rj3RG-A-wn0?si=nwBGXUSvE3xxUsSR) |
 | 3   | ✅ In-App Notification Feature — Completed Walkthrough  | [▶ Watch](https://youtu.be/fs9LxIsQvME?si=rK6OaHf02rvm3U3-) |
 | 4   | 🐞 JWT Authentication Bug Fix — Root Cause & Resolution | [▶ Watch](https://youtu.be/uyvSxrhkSR8?si=9AJxx--k1zeFRAHy) |
@@ -56,7 +58,8 @@ I've recorded short walkthroughs breaking down some of the trickier features and
 | 💳 **Razorpay Payment Gateway**              | Real, verified online payments for appointment billing — UPI, Cards & Netbanking, with server-side signature verification                                                                                              |
 | ☁️ **Cloudinary Cloud Media Storage**        | Profile pictures uploaded via multipart requests are validated, streamed, and persisted to Cloudinary — no local disk dependency, fully production-portable                                                            |
 | 📄 **Server-Side Pagination**                | Every major list endpoint (Admin's Doctors/Patients/Billing, Doctor's Appointments/Patients, Patient's Doctors/Appointments/Prescriptions) accepts `page`/`size` query params and returns a Spring Data `Page<T>` instead of a full unbounded list |
-| 🛡️ **Global Exception Handler**              | `@RestControllerAdvice` catches all exceptions — validation, auth, not-found, duplicates — and returns consistent JSON error responses with timestamp                                                                  |
+| 🤖 **AI Health Assistant (Chatbot)**         | Patient-facing LLM-powered chatbot (Groq API) with a locked-down system prompt — general wellness info and platform guidance only, never diagnosis or prescriptions, with graceful `503` fallback on provider outages |
+| 🛡️ **Global Exception Handler**              | `@RestControllerAdvice` catches all exceptions — validation, auth, not-found, duplicates, chatbot provider errors — and returns consistent JSON error responses with timestamp                                        |
 | ✅ **Bean Validation**                       | `@Valid` + Jakarta Validation annotations (`@NotNull`, `@NotBlank`, `@Email`, `@Digits`) on all request DTOs                                                                                                           |
 | 🩺 **Doctor Approval Workflow**              | Doctors register but are locked out until an Admin approves their account                                                                                                                                              |
 | 🔑 **Password Reset Flow**                   | Forgot-password → token generation → reset-password via secure token                                                                                                                                                   |
@@ -85,12 +88,14 @@ To maintain professional-grade data traceability, the system implements **JPA Au
 
 ![Architecture Diagram](https://raw.githubusercontent.com/ankitdoi-coder/HealthCare-Backend/main/Requirements%20&%20Architecture/06_Architecture_workflow.png)
 
-Classic **3-tier layered architecture**, with Redis sitting alongside MySQL as a second, purpose-built data store for short-lived state:
+Classic **3-tier layered architecture**, with Redis sitting alongside MySQL as a second, purpose-built data store for short-lived state, and an outbound integration layer for the third-party Groq LLM API:
 
 ```
 Controller (REST API)  →  Service (Business Logic)  →  Repository (JPA / MySQL)
                                     │
-                                    └──▶  RedisTemplate  →  Redis  (OTPs, JWT blacklist)
+                                    ├──▶  RedisTemplate  →  Redis  (OTPs, JWT blacklist)
+                                    │
+                                    └──▶  RestTemplate   →  Groq LLM API  (Chatbot replies)
 ```
 
 The codebase is organized by **domain modules** (feature-based packaging), not by layer — keeping related code co-located and the project scalable.
@@ -100,9 +105,10 @@ com.ankit.HealthCare_Backend/
 ├── appointment/          # Appointment booking, status updates, paginated repository queries
 ├── authentication/       # JWT + Redis blacklist, Redis-backed OTP, OAuth2, Security config
 ├── billing/              # Billing records, payment, revenue stats, Razorpay integration, paginated billing list
+├── chatBot/              # AI Health Assistant — controller, service, DTOs; Groq LLM integration
 ├── communication/        # Contact Us feature
 ├── core/                 # Shared enums (AppointmentStatus, BillingStatus), Role entity, RedisConfig
-├── Exception/            # GlobalExceptionHandler + custom exceptions
+├── Exception/            # GlobalExceptionHandler + custom exceptions (incl. ChatbotServiceException)
 ├── filemanagement/       # Profile picture upload/retrieval, Cloudinary integration
 ├── Notification/         # Notification entity & repository
 ├── prescription/         # Doctor prescriptions, paginated patient-facing query
@@ -123,6 +129,7 @@ com.ankit.HealthCare_Backend/
 ![OAuth2](https://img.shields.io/badge/OAuth2-Google-4285F4?style=flat-square&logo=google&logoColor=white)
 ![Razorpay](https://img.shields.io/badge/Razorpay-Java%20SDK-0C2451?style=flat-square&logo=razorpay&logoColor=white)
 ![Cloudinary](https://img.shields.io/badge/Cloudinary-Java%20SDK-3448C5?style=flat-square&logo=cloudinary&logoColor=white)
+![Groq](https://img.shields.io/badge/AI-Groq%20LLM%20API-F55036?style=flat-square&logo=OpenAI&logoColor=white)
 ![JavaMail](https://img.shields.io/badge/Email-JavaMailSender-D14836?style=flat-square&logo=gmail&logoColor=white)
 ![Hibernate](https://img.shields.io/badge/ORM-JPA%2FHibernate-59666C?style=flat-square&logo=hibernate&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-8.3.0-4479A1?style=flat-square&logo=mysql&logoColor=white)
@@ -142,6 +149,7 @@ com.ankit.HealthCare_Backend/
 | Social Login    | Spring OAuth2 Client (Google)             | 6.5.7          |
 | Payment Gateway | Razorpay Java SDK                         | Latest stable  |
 | Media Storage   | Cloudinary Java SDK                       | Latest stable  |
+| AI Chatbot      | Groq LLM API (via `RestTemplate`)         | Latest stable  |
 | Email           | Spring Boot Starter Mail (JavaMailSender) | 3.5.7          |
 | ORM             | Spring Data JPA + Hibernate               | 3.5.7          |
 | Pagination      | Spring Data `Pageable` / `Page<T>`        | 3.5.7          |
@@ -165,7 +173,7 @@ Request → JwtFilter → Redis blacklist check → Validate signature/expiry �
 3. **Google OAuth2** — `/oauth2/**` flow handled by `OAuth2LoginSuccessHandler`, redirects with token
 4. **JWT Filter** — `JwtFilter` intercepts every request, checks the Redis blacklist first, then validates signature & expiry
 5. **Logout / Revocation** — `POST /api/auth/logout` blacklists the presented token in Redis for its remaining lifetime (see [🧠 Redis Integration](#-redis-integration) below)
-6. **Role Guards** — `/api/patient/**` → `ROLE_PATIENT`, `/api/doctor/**` → `ROLE_DOCTOR`, `/api/admin/**` → `ROLE_ADMIN`, `/api/profile/**` → `ROLE_PATIENT` **or** `ROLE_DOCTOR` via `hasAnyRole`
+6. **Role Guards** — `/api/patient/**` → `ROLE_PATIENT`, `/api/doctor/**` → `ROLE_DOCTOR`, `/api/admin/**` → `ROLE_ADMIN`, `/api/profile/**` → `ROLE_PATIENT` **or** `ROLE_DOCTOR` via `hasAnyRole` (the chatbot at `/api/patient/chatbot/**` inherits the `ROLE_PATIENT` guard since it lives under `/api/patient/**`)
 7. **Email OTP** — `POST /api/auth/send-otp` sends a 6-digit OTP stored in Redis; `POST /api/auth/verify-otp` validates it before allowing registration
 8. **Password Reset** — Secure time-limited token flow via `POST /api/auth/forgot-password` → `POST /api/auth/reset-password`
 9. **BCrypt** — All passwords hashed with `BCryptPasswordEncoder`
@@ -261,6 +269,51 @@ Because the upload is wrapped in `@Transactional`, a failure at any stage (inval
 
 ---
 
+## 🤖 AI Health Assistant (Chatbot)
+
+A patient-facing conversational assistant, backed by an LLM served through **Groq's API**, integrated behind the same JWT-secured, role-scoped API surface as the rest of the platform — not a bolt-on widget calling a third-party service directly from the frontend.
+
+### 📌 What's Implemented
+
+| Capability                                                                          | Status        |
+| ------------------------------------------------------------------------------------ | ------------- |
+| Secured endpoint under `ROLE_PATIENT` (`/api/patient/chatbot/ask`)                    | ✅ Implemented |
+| Request validation (`@Valid` on `ChatRequestDTO`) — rejects empty/oversized messages  | ✅ Implemented |
+| Hard-coded system prompt constraining scope — general info + platform guidance only  | ✅ Implemented |
+| Explicit guardrail against diagnosis, prescriptions, or dosage recommendations       | ✅ Implemented |
+| Symptom-description handling redirected toward booking a real doctor on the platform | ✅ Implemented |
+| Server-side call to Groq's chat completion API via `RestTemplate`                    | ✅ Implemented |
+| Custom `ChatbotServiceException` → mapped to `503 Service Unavailable`               | ✅ Implemented |
+| Concise, bounded replies (`temperature 0.5`, `max_tokens 400`, 3–5 sentence prompt)   | ✅ Implemented |
+| Swagger-documented with explicit response codes (`200` / `400` / `503`)              | ✅ Implemented |
+
+### 🧠 Why It's Built This Way
+
+A health chatbot sitting inside a real appointment/records platform carries real risk if it's allowed to freelance as a diagnostic tool. The design deliberately keeps the LLM on a short leash:
+
+```
+1. Patient sends a message      ──▶  POST /api/patient/chatbot/ask   (JWT: ROLE_PATIENT)
+2. @Valid on ChatRequestDTO     ──▶  rejects blank / too-long input before it ever reaches the LLM
+3. ChatbotService builds request──▶  fixed SYSTEM_PROMPT + the patient's message, sent to Groq's chat API
+4. Groq returns a completion    ──▶  parsed out of choices[0].message.content
+5. Any transport/provider error──▶  wrapped as ChatbotServiceException → 503, never a raw stack trace
+```
+
+The **system prompt is the actual security boundary** here, not a suggestion — it explicitly forbids diagnosis, medication/dosage recommendations, or replacing a doctor's advice, and instructs the model to redirect any symptom description toward booking a real appointment on the platform. This mirrors how the Razorpay integration treats the backend (not the client) as the trust boundary — here, the *system prompt plus the global exception handler* are what keep the feature within safe, non-clinical bounds, rather than trusting the LLM's own judgment unconstrained.
+
+Provider failures (Groq API down, network error, malformed response) are caught explicitly rather than allowed to bubble up as a generic `500` — surfaced instead as a clear `503 Service Unavailable` with a user-friendly retry message, consistent with the rest of the API's centralized exception-handling philosophy.
+
+### 🧩 Where It's Applied
+
+| Layer      | Class                                     | Responsibility                                                        |
+| ---------- | ------------------------------------------ | ------------------------------------------------------------------------ |
+| Controller | `chatBot.controller.ChatbotController`     | Validates request, delegates to service, documents contract via Swagger  |
+| Service    | `chatBot.service.ChatbotService`           | Builds the Groq request (system prompt + user message), parses the reply, wraps failures |
+| DTOs       | `ChatRequestDTO`, `chatResponse`           | Request/response shape for the `/ask` endpoint                           |
+| Exception  | `Exception.ChatbotServiceException`        | Signals AI-provider failures distinctly from validation/auth errors, mapped to `503` |
+
+---
+
 ## 📄 Server-Side Pagination
 
 Every list-returning endpoint that can grow unbounded — doctors, patients, appointments, prescriptions, and billing records — is backed by **Spring Data `Pageable`** instead of returning a full, unbounded `List<T>`. This keeps response payloads small and predictable regardless of how much data accumulates in production.
@@ -315,7 +368,7 @@ The billing module integrates **Razorpay** end-to-end for appointment payments �
 ### 📌 What's Implemented
 
 | Capability                                                             | Status        |
-| ---------------------------------------------------------------------- | ------------- |
+| ------------------------------------------------------------------------ | ------------- |
 | Order creation via backend (`POST /api/patient/payments/create-order`) | ✅ Implemented |
 | Razorpay Checkout (UPI, Cards, Netbanking)                             | ✅ Implemented |
 | Server-side payment signature verification (HMAC-SHA256)               | ✅ Implemented |
@@ -386,6 +439,7 @@ A single `@RestControllerAdvice` class handles all error scenarios and returns a
 | `IllegalArgumentException`        | `400 Bad Request`                               |
 | `MethodArgumentNotValidException` | `400 Bad Request` (validation errors)           |
 | `PaymentVerificationException`    | `400 Bad Request` (Razorpay signature mismatch) |
+| `ChatbotServiceException`         | `503 Service Unavailable` (Groq API unreachable or unparsable response) |
 | `Exception` (fallback)            | `500 Internal Server Error`                     |
 
 ---
@@ -410,6 +464,9 @@ All incoming request DTOs are validated with **Jakarta Bean Validation** annotat
 @NotNull @NotBlank  private String razorpayPaymentId;
 @NotNull @NotBlank  private String razorpaySignature;
 @NotNull             private Long appointmentId;
+
+// ChatRequestDTO example
+@NotBlank @Size(max = 1000)  private String message;
 ```
 
 Validation failures are caught by the Global Exception Handler and returned as structured `400 Bad Request` responses.
@@ -444,6 +501,7 @@ Validation failures are caught by the Global Exception Handler and returned as s
 | POST   | `/payments/verify`          | Verify Razorpay payment signature and mark billing as `PAID` |
 | GET    | `/prescriptions`            | View personal prescriptions **(Paginated)**                  |
 | GET    | `/profile`                  | View own patient profile (includes `profilePicture` URL)     |
+| POST   | `/chatbot/ask`               | Ask the AI Health Assistant a question; returns a general-info reply (never diagnosis/prescriptions) |
 
 ### 👨‍⚕️ Doctor — `/api/doctor` _(ROLE_DOCTOR)_
 | Method | Endpoint                    | Description                                                       |
@@ -493,7 +551,7 @@ Core entities: `User`, `Role`, `Patient`, `Doctor`, `Admin`, `Appointment`, `Pre
 
 `Patient` and `Doctor` each store a `profilePicture` column holding the Cloudinary-hosted CDN URL of the user's uploaded profile image.
 
-> Note: OTPs and the JWT blacklist are intentionally **not** part of this relational schema — they live in Redis as short-lived keys, not MySQL rows, since neither needs to survive past its own expiry.
+> Note: OTPs and the JWT blacklist are intentionally **not** part of this relational schema — they live in Redis as short-lived keys, not MySQL rows, since neither needs to survive past its own expiry. The AI chatbot is similarly stateless from a persistence standpoint — conversations are not stored server-side; each `/ask` call is a single, independent request to the LLM.
 
 ---
 
@@ -505,7 +563,7 @@ Once running, the interactive Swagger UI is available at:
 http://localhost:8080/swagger-ui/index.html
 ```
 
-Paginated endpoints are documented with their `page`/`size` query parameters directly in Swagger's interactive "Try it out" panel.
+Paginated endpoints are documented with their `page`/`size` query parameters directly in Swagger's interactive "Try it out" panel. The chatbot endpoint is documented with its explicit `200` / `400` / `503` response codes.
 
 ---
 
@@ -518,6 +576,7 @@ Paginated endpoints are documented with their `page`/`size` query parameters dir
 - Redis 7.x (local install, or a managed free tier such as Upstash/Redis Cloud)
 - A Razorpay account (Test Mode keys are free — no business verification needed to start testing)
 - A Cloudinary account (free tier is sufficient for development)
+- A Groq API key (free tier available — required for the AI Health Assistant chatbot)
 
 ### 🛠️ Setup
 
@@ -552,6 +611,9 @@ razorpay.key.secret=${RAZORPAY_KEY_SECRET}
 cloudinary.cloud-name=${CLOUDINARY_CLOUD_NAME}
 cloudinary.api-key=${CLOUDINARY_API_KEY}
 cloudinary.api-secret=${CLOUDINARY_API_SECRET}
+groq.api.key=${GROQ_API_KEY}
+groq.api.url=${GROQ_API_URL}
+groq.model=${GROQ_MODEL}
 ```
 
 Run:
@@ -580,6 +642,9 @@ Server starts at `http://localhost:8080`
 | `CLOUDINARY_CLOUD_NAME` | Cloudinary account cloud name           | `your_cloud_name`                          |
 | `CLOUDINARY_API_KEY`    | Cloudinary API key                      | `123456789012345`                          |
 | `CLOUDINARY_API_SECRET` | Cloudinary API secret                   | `your_cloudinary_secret`                   |
+| `GROQ_API_KEY`          | Groq API key for the AI chatbot         | `gsk_xxxxxxxxxxxxxxxxxxxx`                 |
+| `GROQ_API_URL`          | Groq chat completions endpoint          | `https://api.groq.com/openai/v1/chat/completions` |
+| `GROQ_MODEL`            | Groq model identifier to use            | `llama-3.1-8b-instant`                     |
 
 ---
 
@@ -636,10 +701,11 @@ This project was built to demonstrate practical, production-grade backend engine
 - 🚪 **Real logout for stateless JWTs** — a token can be revoked before its natural expiry, closing the gap that pure client-side logout leaves open.
 - ☁️ **Stateless media handling** — profile pictures stream directly to Cloudinary rather than local disk, keeping the API instance-agnostic and production-portable from day one.
 - 📄 **Query-level pagination, not in-memory slicing** — every list endpoint that can grow unbounded pushes `Pageable` down into the repository layer, so response times stay flat as data volume grows instead of degrading with a full-table fetch.
+- 🤖 **Guardrailed LLM integration, not an open-ended chatbot** — the AI assistant's system prompt is treated as an actual safety boundary (no diagnosis, no dosages, redirect symptoms to real doctors), and provider failures are caught explicitly rather than leaking a raw exception to the client.
 - 🪪 **Stateless, role-scoped JWT auth** with a proper OAuth2 social login path alongside it.
 - 🧩 **Consistent error contracts** across the entire API via a single global exception handler.
 - 🏗️ **Domain-driven package structure** that scales cleanly as features are added, rather than a flat MVC layout.
-- 🔗 **Real third-party integration experience** with Razorpay's order lifecycle (create → checkout → verify) and Cloudinary's upload API — not simulated or mocked integrations.
+- 🔗 **Real third-party integration experience** with Razorpay's order lifecycle (create → checkout → verify), Cloudinary's upload API, and Groq's LLM API — not simulated or mocked integrations.
 - 🎥 **Documented engineering process** — video walkthroughs above show real debugging and design decisions, not just polished final output.
 
 ---
