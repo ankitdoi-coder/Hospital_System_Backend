@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  # MySQL Database Service
+  mysql-db:
+    image: mysql:8.0
+    container_name: hospital_db
+    environment:
+      MYSQL_DATABASE: hospital_db
+      MYSQL_ROOT_PASSWORD: secretpassword
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  # Backend Service
+  hospital-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hospital_backend_app
+    ports:
+      - "8080:8080"
+    env_file:           
+      - .env  
+    environment:
+      # Notice we use the service name "mysql-db" here instead of localhost
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/hospital_db?allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: secretpassword
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+
+volumes:
+  mysql_data:
