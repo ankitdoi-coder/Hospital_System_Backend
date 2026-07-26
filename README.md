@@ -2,14 +2,18 @@
 
 # 🏥 Smart Healthcare System — Backend
 
-**A production-ready, secure, and scalable RESTful API** for a **Smart Healthcare Appointment & Records System**, built with **Java 17 + Spring Boot 3.5**.
-Implements real-world engineering practices including JWT-based auth with Redis-backed token revocation, role-based access control, centralized exception handling, request validation, OAuth2 social login, **Razorpay payment gateway integration**, billing management, **Cloudinary-backed cloud file storage**, **server-side pagination**, an **AI Health Assistant chatbot powered by Groq LLM**, and automated API documentation.
+**A production-grade RESTful API**, engineered end-to-end with **Java 17 + Spring Boot 3.5** — the focus throughout is real backend engineering discipline: correct security boundaries, containerized and reproducible deployments, and third-party integrations that treat the server (not the client) as the source of truth.
+
+This isn't a CRUD tutorial project. It's built the way a small production system actually needs to be built: JWT auth with real server-side revocation (Redis-backed), a payment flow that cryptographically verifies its own transactions, cloud-native file storage, a guardrailed LLM integration, and a fully containerized, health-checked deployment stack.
+
+Implements real-world engineering practices including JWT-based auth with Redis-backed token revocation, role-based access control, centralized exception handling, request validation, OAuth2 social login, **Razorpay payment gateway integration**, billing management, **Cloudinary-backed cloud file storage**, **server-side pagination**, an **AI Health Assistant chatbot powered by Groq LLM**, full **Docker containerization**, and automated API documentation.
 
 [![Java](https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.7-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![Spring Security](https://img.shields.io/badge/Spring%20Security-JWT-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white)](https://spring.io/projects/spring-security)
 [![Redis](https://img.shields.io/badge/Cache-Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
 [![MySQL](https://img.shields.io/badge/MySQL-8.3-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
 [![Maven](https://img.shields.io/badge/Maven-3.x-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)](https://maven.apache.org/)
 [![Swagger](https://img.shields.io/badge/API%20Docs-Swagger%2FOpenAPI-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)](https://swagger.io/)
 [![Razorpay](https://img.shields.io/badge/Payments-Razorpay-0C2451?style=for-the-badge&logo=razorpay&logoColor=white)](https://razorpay.com/)
@@ -59,6 +63,7 @@ I've recorded short walkthroughs breaking down some of the trickier features and
 | ☁️ **Cloudinary Cloud Media Storage**        | Profile pictures uploaded via multipart requests are validated, streamed, and persisted to Cloudinary — no local disk dependency, fully production-portable                                                            |
 | 📄 **Server-Side Pagination**                | Every major list endpoint (Admin's Doctors/Patients/Billing, Doctor's Appointments/Patients, Patient's Doctors/Appointments/Prescriptions) accepts `page`/`size` query params and returns a Spring Data `Page<T>` instead of a full unbounded list |
 | 🤖 **AI Health Assistant (Chatbot)**         | Patient-facing LLM-powered chatbot (Groq API) with a locked-down system prompt — general wellness info and platform guidance only, never diagnosis or prescriptions, with graceful `503` fallback on provider outages |
+| 🐳 **Full Docker Containerization**          | Multi-stage `Dockerfile` + `docker-compose.yml` orchestrating the app, MySQL, and Redis together with health-checked startup ordering and persistent volumes                                                          |
 | 🛡️ **Global Exception Handler**              | `@RestControllerAdvice` catches all exceptions — validation, auth, not-found, duplicates, chatbot provider errors — and returns consistent JSON error responses with timestamp                                        |
 | ✅ **Bean Validation**                       | `@Valid` + Jakarta Validation annotations (`@NotNull`, `@NotBlank`, `@Email`, `@Digits`) on all request DTOs                                                                                                           |
 | 🩺 **Doctor Approval Workflow**              | Doctors register but are locked out until an Admin approves their account                                                                                                                                              |
@@ -98,6 +103,8 @@ Controller (REST API)  →  Service (Business Logic)  →  Repository (JPA / MyS
                                     └──▶  RestTemplate   →  Groq LLM API  (Chatbot replies)
 ```
 
+The entire stack — application, MySQL, and Redis — runs containerized via Docker Compose on a shared internal network (see [🐳 Containerization](#-containerization-docker) below).
+
 The codebase is organized by **domain modules** (feature-based packaging), not by layer — keeping related code co-located and the project scalable.
 
 ```
@@ -130,6 +137,7 @@ com.ankit.HealthCare_Backend/
 ![Razorpay](https://img.shields.io/badge/Razorpay-Java%20SDK-0C2451?style=flat-square&logo=razorpay&logoColor=white)
 ![Cloudinary](https://img.shields.io/badge/Cloudinary-Java%20SDK-3448C5?style=flat-square&logo=cloudinary&logoColor=white)
 ![Groq](https://img.shields.io/badge/AI-Groq%20LLM%20API-F55036?style=flat-square&logo=OpenAI&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white)
 ![JavaMail](https://img.shields.io/badge/Email-JavaMailSender-D14836?style=flat-square&logo=gmail&logoColor=white)
 ![Hibernate](https://img.shields.io/badge/ORM-JPA%2FHibernate-59666C?style=flat-square&logo=hibernate&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-8.3.0-4479A1?style=flat-square&logo=mysql&logoColor=white)
@@ -150,6 +158,7 @@ com.ankit.HealthCare_Backend/
 | Payment Gateway | Razorpay Java SDK                         | Latest stable  |
 | Media Storage   | Cloudinary Java SDK                       | Latest stable  |
 | AI Chatbot      | Groq LLM API (via `RestTemplate`)         | Latest stable  |
+| Containerization| Docker + Docker Compose                   | Multi-stage build |
 | Email           | Spring Boot Starter Mail (JavaMailSender) | 3.5.7          |
 | ORM             | Spring Data JPA + Hibernate               | 3.5.7          |
 | Pagination      | Spring Data `Pageable` / `Page<T>`        | 3.5.7          |
@@ -567,6 +576,65 @@ Paginated endpoints are documented with their `page`/`size` query parameters dir
 
 ---
 
+## 🐳 Containerization (Docker)
+
+The entire backend stack — **application, MySQL, and Redis** — runs fully containerized via a multi-stage Docker build and Docker Compose orchestration, verified end-to-end (not just "should work").
+
+### 📌 What's Implemented
+
+| Capability                                                                  | Status        |
+| ---------------------------------------------------------------------------- | ------------- |
+| Multi-stage `Dockerfile` (Maven build stage → lightweight JRE runtime)       | ✅ Implemented |
+| `docker-compose.yml` orchestrating backend + MySQL + Redis together          | ✅ Implemented |
+| Health-checked startup ordering — backend waits for both MySQL and Redis to report healthy, not just "container started" | ✅ Implemented |
+| `.env`-driven configuration via `env_file`, no hardcoded secrets             | ✅ Implemented |
+| Docker-internal service networking (`mysql-db`, `redis-cache` resolved by name, no `localhost`) | ✅ Implemented |
+| Persistent volumes for both MySQL and Redis data                             | ✅ Implemented |
+
+### 🧠 Why a Multi-Stage Build
+
+```dockerfile
+FROM maven:3.9.6-eclipse-temurin-17 AS build   # Stage 1: full JDK + Maven + source
+...
+FROM eclipse-temurin:17-jre-alpine             # Stage 2: JRE + built jar only
+COPY --from=build /app/target/*.jar app.jar
+```
+
+The build stage needs the full Maven toolchain and source tree to produce the jar; the runtime stage needs neither. Shipping only the compiled jar into a minimal Alpine JRE image keeps the deployed container free of build tools, source code, and dependency caches.
+
+### 🧠 A Real Bug This Setup Caught: MySQL Healthcheck Timing
+
+Early in wiring this up, `depends_on: condition: service_healthy` alone wasn't enough — on a **first-time run with a fresh volume**, MySQL's own initialization (creating system tables, InnoDB setup) took longer than the healthcheck's default grace period, so Docker marked it unhealthy and refused to start the backend, even though MySQL was still legitimately mid-startup:
+
+```
+Container hospital_db  Error
+dependency mysql-db failed to start
+dependency failed to start: container hospital_db is unhealthy
+```
+
+The fix was widening the healthcheck's patience specifically for the slow, one-time first-init path:
+
+```yaml
+healthcheck:
+  test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+  interval: 10s
+  timeout: 5s
+  retries: 10
+  start_period: 90s
+```
+
+This is the same category of race condition that can silently break a production deploy on a cold volume — worth catching in local Docker testing rather than in a live rollout.
+
+### 🚀 Running with Docker
+
+```bash
+docker-compose up --build
+```
+
+This builds the backend image and brings up MySQL and Redis alongside it on a shared Docker network — no local MySQL or Redis install required. Confirmed working: Swagger UI (`http://localhost:8080/swagger-ui/index.html`), Hibernate DDL auto-creating all tables/constraints, and JWT/OAuth2 security filter chain, all through the containerized stack.
+
+---
+
 ## ⚙️ Getting Started
 
 ### ✅ Prerequisites
@@ -577,8 +645,9 @@ Paginated endpoints are documented with their `page`/`size` query parameters dir
 - A Razorpay account (Test Mode keys are free — no business verification needed to start testing)
 - A Cloudinary account (free tier is sufficient for development)
 - A Groq API key (free tier available — required for the AI Health Assistant chatbot)
+- Docker & Docker Compose (optional, but recommended — see [🐳 Containerization](#-containerization-docker) above for a zero-local-install setup)
 
-### 🛠️ Setup
+### 🛠️ Setup (Local, Non-Docker)
 
 ```bash
 git clone https://github.com/ankitdoi-coder/healthcare-backend.git
@@ -623,6 +692,17 @@ mvn spring-boot:run
 
 Server starts at `http://localhost:8080`
 
+### 🐳 Setup (Docker — Recommended)
+
+```bash
+git clone https://github.com/ankitdoi-coder/healthcare-backend.git
+cd healthcare-backend
+# create a .env file with the variables listed below
+docker-compose up --build
+```
+
+No local MySQL, Redis, or Maven install required — see [🐳 Containerization](#-containerization-docker) above for details on the multi-stage build and service orchestration.
+
 ---
 
 ## 🔧 Environment Variables
@@ -645,6 +725,8 @@ Server starts at `http://localhost:8080`
 | `GROQ_API_KEY`          | Groq API key for the AI chatbot         | `gsk_xxxxxxxxxxxxxxxxxxxx`                 |
 | `GROQ_API_URL`          | Groq chat completions endpoint          | `https://api.groq.com/openai/v1/chat/completions` |
 | `GROQ_MODEL`            | Groq model identifier to use            | `llama-3.1-8b-instant`                     |
+
+> When running via Docker Compose, these are supplied through a `.env` file referenced by `env_file` in `docker-compose.yml` — no secrets are hardcoded into the image or the compose file itself.
 
 ---
 
@@ -702,6 +784,7 @@ This project was built to demonstrate practical, production-grade backend engine
 - ☁️ **Stateless media handling** — profile pictures stream directly to Cloudinary rather than local disk, keeping the API instance-agnostic and production-portable from day one.
 - 📄 **Query-level pagination, not in-memory slicing** — every list endpoint that can grow unbounded pushes `Pageable` down into the repository layer, so response times stay flat as data volume grows instead of degrading with a full-table fetch.
 - 🤖 **Guardrailed LLM integration, not an open-ended chatbot** — the AI assistant's system prompt is treated as an actual safety boundary (no diagnosis, no dosages, redirect symptoms to real doctors), and provider failures are caught explicitly rather than leaking a raw exception to the client.
+- 🐳 **Real containerization, not a token Dockerfile** — a multi-stage build, health-checked service dependencies, persistent volumes, and a first-init race condition actually caught and fixed during local testing rather than glossed over.
 - 🪪 **Stateless, role-scoped JWT auth** with a proper OAuth2 social login path alongside it.
 - 🧩 **Consistent error contracts** across the entire API via a single global exception handler.
 - 🏗️ **Domain-driven package structure** that scales cleanly as features are added, rather than a flat MVC layout.
@@ -718,6 +801,6 @@ This project was built to demonstrate practical, production-grade backend engine
 
 [![GitHub](https://img.shields.io/badge/GitHub-ankitdoi--coder-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/ankitdoi-coder)
 
-💼 *Open to Java Full Stack / Backend  opportunities. Feel free to connect!*
+💼 *Open to Java Full Stack / Backend opportunities. Feel free to connect!*
 
 </div>

@@ -16,8 +16,23 @@ services:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
+      retries: 10
+      start_period: 90s
+
+  # Redis Service (OTP store + JWT blacklist)
+  redis-cache:
+    image: redis:7-alpine
+    container_name: hospital_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
       retries: 5
-      start_period: 40s
+      start_period: 10s
 
   # Backend Service
   hospital-backend:
@@ -34,9 +49,15 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/hospital_db?allowPublicKeyRetrieval=true&useSSL=false
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: secretpassword
+      # Notice we use the service name "redis-cache" here instead of localhost
+      REDIS_HOST: redis-cache
+      REDIS_PORT: 6379
     depends_on:
       mysql-db:
+        condition: service_healthy
+      redis-cache:
         condition: service_healthy
 
 volumes:
   mysql_data:
+  redis_data:
