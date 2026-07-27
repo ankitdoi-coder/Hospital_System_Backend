@@ -49,9 +49,9 @@ public class PatientController {
 
     @Operation(summary = "Book a new appointment", description = "Books an appointment with a doctor. Pass doctorId and appointmentDate in the request body")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Appointment booked successfully"),
-        @ApiResponse(responseCode = "400", description = "Validation error in request body"),
-        @ApiResponse(responseCode = "404", description = "Doctor not found")
+            @ApiResponse(responseCode = "200", description = "Appointment booked successfully"),
+            @ApiResponse(responseCode = "400", description = "Validation error in request body"),
+            @ApiResponse(responseCode = "404", description = "Doctor not found")
     })
     @PostMapping("/appointments/new")
     public ResponseEntity<AppointmentDTO> newAppointment(
@@ -88,27 +88,33 @@ public class PatientController {
 
     @Operation(summary = "Make payment for appointment", description = "Marks the billing status of an appointment as PAID")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Payment successful"),
-        @ApiResponse(responseCode = "404", description = "Appointment not found")
+            @ApiResponse(responseCode = "200", description = "Payment successful"),
+            @ApiResponse(responseCode = "404", description = "Appointment not found")
     })
     @PutMapping("/appointments/{id}/pay")
     public ResponseEntity<String> makePayment(
-            @Parameter(description = "Appointment ID", required = true, example = "1")
-            @Positive(message = "Appointment ID must be positive") @PathVariable Long id) {
+            @Parameter(description = "Appointment ID", required = true, example = "1") @Positive(message = "Appointment ID must be positive") @PathVariable Long id) {
         patientService.makePayment(id);
         return ResponseEntity.ok("Payment successful");
     }
 
     @Operation(summary = "Cancel an appointment", description = "Cancels a pending or scheduled appointment by ID")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Appointment cancelled successfully"),
-        @ApiResponse(responseCode = "404", description = "Appointment not found")
+            @ApiResponse(responseCode = "200", description = "Appointment cancelled successfully"),
+            @ApiResponse(responseCode = "404", description = "Appointment not found")
     })
     @DeleteMapping("/appointments/{id}/cancel")
     public ResponseEntity<String> cancelAppointment(
-            @Parameter(description = "Appointment ID", required = true, example = "1")
-            @Positive(message = "Appointment ID must be positive") @PathVariable Long id) {
+            @Parameter(description = "Appointment ID", required = true, example = "1") @Positive(message = "Appointment ID must be positive") @PathVariable Long id) {
         patientService.cancelAppointment(id);
         return ResponseEntity.ok("Appointment cancelled successfully");
+    }
+
+    @Operation(summary = "Update patient profile", description = "Updates the logged-in patient's personal details")
+    @PutMapping("/profile")
+    public ResponseEntity<PatientDTO> updateProfile(@RequestBody PatientDTO patientDTO, Authentication authentication) {
+        String email = authentication.getName();
+        PatientDTO updated = patientService.updateProfile(patientDTO, email);
+        return ResponseEntity.ok(updated);
     }
 }

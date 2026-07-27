@@ -39,4 +39,6 @@ public class Patient extends BaseAuditEntity{
 
     @Column(name="profile_picture")
     private String profilePicture;  //stores the url of PFP
+    @Column(name="address")
+    private String address;  //stores the address of PFP
 }

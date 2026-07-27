@@ -17,4 +17,5 @@ public interface PatientService {
     PatientDTO getMyProfile();
     void makePayment(Long appointmentId);
     void cancelAppointment(Long appointmentId);
+    PatientDTO updateProfile(PatientDTO patientDTO, String email);
 }

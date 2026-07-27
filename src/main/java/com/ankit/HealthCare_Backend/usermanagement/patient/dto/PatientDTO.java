@@ -30,5 +30,8 @@ public class PatientDTO {
     private String email;
 
     @Schema(description = "URL of the patient's profile picture", example = "https://res.cloudinary.com/.../profile.jpg")
-    private String profilePicture;   
+    private String profilePicture; 
+
+    @Schema(description = "Address of the patient's profile", example = "123 Main St, City, State 12345")
+    private String address;   
 }

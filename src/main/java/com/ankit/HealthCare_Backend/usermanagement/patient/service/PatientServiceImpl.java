@@ -39,8 +39,6 @@ import lombok.extern.slf4j.Slf4j;
 import com.ankit.HealthCare_Backend.Notification.NotificationService;
 import com.ankit.HealthCare_Backend.Notification.NotificationType;
 
-
-
 @Service
 @Slf4j
 public class PatientServiceImpl implements PatientService {
@@ -78,7 +76,7 @@ public class PatientServiceImpl implements PatientService {
     }
 
     // Convert Doctor Entity Data to DoctorDTO Data
-    private DoctorDTO   convertToDoctorDto(Doctor doctor) {
+    private DoctorDTO convertToDoctorDto(Doctor doctor) {
         DoctorDTO dto = new DoctorDTO();
         dto.setId(doctor.getId());
         dto.setFirstName(doctor.getFirstName());
@@ -152,9 +150,6 @@ public class PatientServiceImpl implements PatientService {
         // 3. Save the new appointment
         Appointment savedAppointment = appointmentRepo.save(newAppointment);
 
-
-
-        
         // 4.create new Notification for patient
 
         // we fire 2 notification here
@@ -174,24 +169,25 @@ public class PatientServiceImpl implements PatientService {
                         + doctor.getFirstName() + " " + doctor.getLastName() + " has been booked for "
                         + appointmentDTO.getAppointmentDate() + ".\n\nThank you for choosing our healthcare services.");
         mailSender.send(message1);
-        log.info("Email Sent Successfully to the Patient"+user.getEmail());
+        log.info("Email Sent Successfully to the Patient" + user.getEmail());
 
         // Second for the Doctor
         notiService.createNotification(doctor.getUser().getId(),
                 "You have new Appointment from Patient :" + patient.getFirstName() + patient.getLastName(),
                 user.getId(), NotificationType.APPOINTMENT);
-        
-        SimpleMailMessage message2=new SimpleMailMessage();
+
+        SimpleMailMessage message2 = new SimpleMailMessage();
         message2.setTo(doctor.getUser().getEmail());
         message2.setSubject("New Appointment");
         message2.setText(
-                "Dear Dr. " + doctor.getFirstName() + " " + doctor.getLastName() + ",\n\nYou have a new appointment with Patient "
+                "Dear Dr. " + doctor.getFirstName() + " " + doctor.getLastName()
+                        + ",\n\nYou have a new appointment with Patient "
                         + patient.getFirstName() + " " + patient.getLastName() + " scheduled for "
                         + appointmentDTO.getAppointmentDate() + ".\n\nPlease check your dashboard for more details.");
-                        
+
         mailSender.send(message2);
-        
-        log.info("Email Sent Successfully to the Doctor"+doctor.getUser().getEmail());
+
+        log.info("Email Sent Successfully to the Doctor" + doctor.getUser().getEmail());
 
         // 5. Convert back to DTO
         return convertToAppointmentDto(savedAppointment);
@@ -337,8 +333,40 @@ public class PatientServiceImpl implements PatientService {
         dto.setContactNumber(patient.getContactNumber());
         dto.setDob(patient.getDob());
         dto.setProfilePicture(patient.getProfilePicture());
-        dto.setEmail(patient.getUser().getEmail()); 
+        dto.setEmail(patient.getUser().getEmail());
+        dto.setAddress(patient.getAddress());
         return dto;
+    }
+
+    // update Patient Profile data
+    @Override
+    @Transactional
+    public PatientDTO updateProfile(PatientDTO patientDTO, String email) {
+        User user = userRepo.findByEmail(email);
+        if (user == null) {
+            throw new ResourceNotFoundException("User not found: " + email);
+        }
+        Patient patient = patientRepo.findByUserId(user.getId());
+        if (patient == null) {
+            throw new ResourceNotFoundException("No patient profile found for user: " + email);
+        }
+
+        // Update fields if provided
+        if (patientDTO.getFirstName() != null)
+            patient.setFirstName(patientDTO.getFirstName());
+        if (patientDTO.getLastName() != null)
+            patient.setLastName(patientDTO.getLastName());
+        if (patientDTO.getContactNumber() != null)
+            patient.setContactNumber(patientDTO.getContactNumber());
+        if (patientDTO.getDob() != null)
+            patient.setDob(patientDTO.getDob());
+        if (patientDTO.getAddress() != null)
+            patient.setAddress(patientDTO.getAddress());
+        if (patientDTO.getProfilePicture() != null)
+            patient.setProfilePicture(patientDTO.getProfilePicture());
+
+        Patient updatedPatient = patientRepo.save(patient);
+        return convertToPatientDto(updatedPatient);
     }
 
 }
