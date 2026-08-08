@@ -1,5 +1,7 @@
 package com.ankit.HealthCare_Backend.usermanagement.doctor.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -26,6 +28,7 @@ public class DoctorDTO {
     private String experience;
 
     @Schema(description = "Whether the doctor is approved by admin to login and accept appointments", example = "true")
+    @JsonProperty("isApproved")
     private boolean isApproved;
 
     @Schema(description = "URL of the Doctor's profile picture", example = "https://res.cloudinary.com/.../profile.jpg")
