@@ -20,4 +20,5 @@ public interface DoctorService {
     AppointmentDTO updateAppointmentStatus(Long id, UpdateStatusDTO status);
     List<PrescriptionDTO> getMyPrescriptions();
     DoctorDTO getMyProfile();
+    DoctorDTO updateMyProfile(DoctorDTO doctorDTO);
 }

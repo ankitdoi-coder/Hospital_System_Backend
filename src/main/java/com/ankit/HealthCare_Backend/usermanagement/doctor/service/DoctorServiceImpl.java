@@ -76,8 +76,54 @@ public class DoctorServiceImpl implements DoctorService {
         dto.setApproved(doctor.isApproved());
         dto.setEmail(email);
         dto.setProfilePicture(doctor.getProfilePicture());
+        dto.setAddress(doctor.getAddress());
+        dto.setPhone(doctor.getPhone());
+        dto.setContactNumber(doctor.getContactNumber());
+        dto.setDob(doctor.getDob());
 
         return dto;
+    }
+
+    @Override
+    @Transactional
+    public DoctorDTO updateMyProfile(DoctorDTO doctorDTO) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken)
+            throw new UnauthorizedException("Unauthenticated");
+
+        String email = auth.getName();
+        User user = userRepo.findByEmail(email);
+        if (user == null) throw new ResourceNotFoundException("User not found: " + email);
+
+        Doctor doctor = doctorRepo.findByUserId(user.getId());
+        if (doctor == null) throw new ResourceNotFoundException("Doctor profile not found for: " + email);
+
+        if (doctorDTO.getFirstName() != null) doctor.setFirstName(doctorDTO.getFirstName());
+        if (doctorDTO.getLastName() != null) doctor.setLastName(doctorDTO.getLastName());
+        if (doctorDTO.getSpecialty() != null) doctor.setSpecialty(doctorDTO.getSpecialty());
+        if (doctorDTO.getExperience() != null) doctor.setExperience(doctorDTO.getExperience());
+        if (doctorDTO.getAddress() != null) doctor.setAddress(doctorDTO.getAddress());
+        if (doctorDTO.getPhone() != null) doctor.setPhone(doctorDTO.getPhone());
+        if (doctorDTO.getContactNumber() != null) doctor.setContactNumber(doctorDTO.getContactNumber());
+        if (doctorDTO.getProfilePicture() != null) doctor.setProfilePicture(doctorDTO.getProfilePicture());
+        if (doctorDTO.getDob() != null) doctor.setDob(doctorDTO.getDob());
+
+        doctorRepo.save(doctor);
+
+        DoctorDTO response = new DoctorDTO();
+        response.setId(doctor.getId());
+        response.setFirstName(doctor.getFirstName());
+        response.setLastName(doctor.getLastName());
+        response.setSpecialty(doctor.getSpecialty());
+        response.setExperience(doctor.getExperience());
+        response.setApproved(doctor.isApproved());
+        response.setEmail(email);
+        response.setProfilePicture(doctor.getProfilePicture());
+        response.setAddress(doctor.getAddress());
+        response.setPhone(doctor.getPhone());
+        response.setContactNumber(doctor.getContactNumber());
+        response.setDob(doctor.getDob());
+        return response;
     }
 
     // Get upcoming appoinments of doctor

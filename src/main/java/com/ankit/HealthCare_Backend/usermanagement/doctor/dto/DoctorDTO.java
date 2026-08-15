@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.time.LocalDate;
+
 @Data
 @Schema(description = "Doctor profile details")
 public class DoctorDTO {
@@ -32,5 +34,17 @@ public class DoctorDTO {
     private boolean isApproved;
 
     @Schema(description = "URL of the Doctor's profile picture", example = "https://res.cloudinary.com/.../profile.jpg")
-    private String profilePicture;   
+    private String profilePicture;
+
+    @Schema(description = "doctors address")
+    private String address;
+
+    @Schema(description = "doctors phone number")
+    private String phone;
+
+    @Schema(description = "doctors contact number")
+    private String contactNumber;
+
+    @Schema(description = "doctors date of birth")
+    private LocalDate dob;
 }

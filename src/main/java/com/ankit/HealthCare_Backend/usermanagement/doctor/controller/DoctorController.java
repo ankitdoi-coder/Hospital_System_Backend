@@ -42,6 +42,13 @@ import com.ankit.HealthCare_Backend.usermanagement.patient.dto.PatientDTO;
 public class DoctorController {
     private final DoctorService doctorService;
 
+    @Operation(summary = "Update my profile", description = "Updates the logged-in doctor's profile details")
+    @ApiResponse(responseCode = "200", description = "Doctor profile updated")
+    @PutMapping("/profile")
+    public ResponseEntity<DoctorDTO> updateMyProfile(@RequestBody DoctorDTO doctorDTO) {
+        return ResponseEntity.ok(doctorService.updateMyProfile(doctorDTO));
+    }
+
     @Operation(summary = "Get my profile", description = "Returns the logged-in doctor's profile details")
     @ApiResponse(responseCode = "200", description = "Doctor profile returned")
     @GetMapping("/profile")

@@ -8,6 +8,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 @Entity
 @Data
 @NoArgsConstructor
@@ -42,5 +44,13 @@ public class Doctor extends BaseAuditEntity{
     @Column(name="profile_picture")
     private String profilePicture;  //stores the url of PFP
 
+    @Column(name="address")
+    private String address;
+
+    @Column(name="phone")
+    private String phone;
+
+    @Column(name="dob")
+    private LocalDate dob;
 
 }
