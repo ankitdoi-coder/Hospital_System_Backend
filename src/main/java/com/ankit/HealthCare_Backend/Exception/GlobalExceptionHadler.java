@@ -1,5 +1,9 @@
 package com.ankit.HealthCare_Backend.Exception;
 
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -7,12 +11,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.Map;
-
-
 @RestControllerAdvice
+
 public class GlobalExceptionHadler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -51,10 +51,10 @@ public class GlobalExceptionHadler {
     }
 
     @ExceptionHandler(Exception.class)
-public ResponseEntity<Map<String, Object>> handleGeneral(Exception ex) {
-    ex.printStackTrace(); // TEMP: remove after debugging
-    return buildResponse("An unexpected error occurred: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-}
+    public ResponseEntity<Map<String, Object>> handleGeneral(Exception ex) {
+        ex.printStackTrace(); // TEMP: remove after debugging
+        return buildResponse("An unexpected error occurred: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
     // chat Bot exception
     @ExceptionHandler(ChatbotServiceException.class)
