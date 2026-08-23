@@ -51,9 +51,10 @@ public class GlobalExceptionHadler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleGeneral(Exception ex) {
-        return buildResponse("An unexpected error occurred: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+public ResponseEntity<Map<String, Object>> handleGeneral(Exception ex) {
+    ex.printStackTrace(); // TEMP: remove after debugging
+    return buildResponse("An unexpected error occurred: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+}
 
     // chat Bot exception
     @ExceptionHandler(ChatbotServiceException.class)
