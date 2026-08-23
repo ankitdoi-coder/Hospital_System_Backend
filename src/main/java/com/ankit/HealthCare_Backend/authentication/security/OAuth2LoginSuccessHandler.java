@@ -1,17 +1,9 @@
 package com.ankit.HealthCare_Backend.authentication.security;
 
-import com.ankit.HealthCare_Backend.authentication.security.JwtService;
-import com.ankit.HealthCare_Backend.core.entity.Role;
-import com.ankit.HealthCare_Backend.usermanagement.patient.entity.Patient;
-import com.ankit.HealthCare_Backend.usermanagement.patient.repository.PatientRepository;
-import com.ankit.HealthCare_Backend.core.repository.RoleRepository;
-import com.ankit.HealthCare_Backend.usermanagement.user.entity.User;
-import com.ankit.HealthCare_Backend.usermanagement.user.repository.UserRepository;
+import java.io.IOException;
+import java.time.LocalDate;
+import java.util.Arrays;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -20,9 +12,17 @@ import org.springframework.security.web.authentication.SimpleUrlAuthenticationSu
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.io.IOException;
-import java.time.LocalDate;
-import java.util.Arrays;
+import com.ankit.HealthCare_Backend.core.entity.Role;
+import com.ankit.HealthCare_Backend.core.repository.RoleRepository;
+import com.ankit.HealthCare_Backend.usermanagement.patient.entity.Patient;
+import com.ankit.HealthCare_Backend.usermanagement.patient.repository.PatientRepository;
+import com.ankit.HealthCare_Backend.usermanagement.user.entity.User;
+import com.ankit.HealthCare_Backend.usermanagement.user.repository.UserRepository;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 
 
 @Component
@@ -62,7 +62,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
 
         String jwt = jwtService.generateToken(userDetails);
 
-        String targetUrl = UriComponentsBuilder.fromUriString(callbackUri)
+        String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
                 .queryParam("token", jwt)
                 .build().toUriString();
 

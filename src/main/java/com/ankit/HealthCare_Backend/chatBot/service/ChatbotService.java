@@ -16,22 +16,23 @@ import org.springframework.web.client.RestTemplate;
 import java.util.List;
 import java.util.Map;
 
-@Service
-public class ChatbotService {
+@ Service 
 
-    private final RestTemplate restTemplate = new RestTemplate();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    public class ChatbotService {
 
-    @Value("${groq.api.key}")
-    private String apiKey;
+        private final RestTemplate restTemplate = new RestTemplate();
+        private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Value("${groq.api.url}")
-    private String apiUrl;
+        @Value("${groq.api.key}")
+        private String apiKey;
 
-    @Value("${groq.model}")
-    private String model;
+        @Value("${groq.api.url}")
+        private String apiUrl;
 
-    private static final String SYSTEM_PROMPT = """
+        @Value("${groq.model}")
+        private String model;
+
+        private static final String SYSTEM_PROMPT = """
             You are the AI Health Assistant inside a hospital management platform.
             Rules you must always follow:
             1. You may give general wellness/health information and explain how to use
@@ -43,30 +44,33 @@ public class ChatbotService {
             4. Keep answers concise (3-5 sentences) and in plain, friendly language.
             """;
 
-    public chatResponse getChatResponse(String userMessage) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(apiKey);
+        public chatResponse getChatResponse(String userMessage) {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(apiKey);
 
-        Map<String, Object> requestBody = Map.of(
-                "model", model,
-                "messages", List.of(
-                        Map.of("role", "system", "content", SYSTEM_PROMPT),
-                        Map.of("role", "user", "content", userMessage)
-                ),
-                "temperature", 0.5,
-                "max_tokens", 400
-        );
+            Map<String, Object> requestBody = Map.of(
+                    "model", model,
+                    "messages", List.of(
+                            Map.of("role", "system", "content", SYSTEM_PROMPT),
+                            Map.of("role", "user", "content", userMessage)
+                    ),
+                    "temperature", 0.5,
+                    "max_tokens", 400
+            );
 
-        HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
+            HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
 
-        try {
-            String rawResponse = restTemplate.postForObject(apiUrl, requestEntity, String.class);
-            return parseReply(rawResponse);
-        } catch (RestClientException ex) {
-            throw new ChatbotServiceException(
-                    "AI assistant is temporarily unavailable. Please try again in a moment.", ex);
-        }
+            try {
+                String rawResponse = restTemplate.postForObject(apiUrl, requestEntity, String.class);
+                return parseReply(rawResponse);
+            } catch (RestClientException ex) {
+                // ADD THIS LINE to see the real error in your backend terminal:
+                System.err.println("GROQ API ERROR: " + ex.getMessage());
+
+                throw new ChatbotServiceException(
+                        "AI assistant is temporarily unavailable. Please try again in a moment.", ex);
+            }
     }
 
     private chatResponse parseReply(String rawResponse) {
