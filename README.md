@@ -17,8 +17,11 @@ Implements real-world engineering practices including JWT-based auth with Redis-
 [![Maven](https://img.shields.io/badge/Maven-3.x-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)](https://maven.apache.org/)
 [![Swagger](https://img.shields.io/badge/API%20Docs-Swagger%2FOpenAPI-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)](https://swagger.io/)
 [![Razorpay](https://img.shields.io/badge/Payments-Razorpay-0C2451?style=for-the-badge&logo=razorpay&logoColor=white)](https://razorpay.com/)
-[![Cloudinary](https://img.shields.io/badge/Media%20Storage-Cloudinary-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white)](https://cloudinary.com/)
 [![Groq](https://img.shields.io/badge/AI%20Chatbot-Groq%20LLM-F55036?style=for-the-badge&logo=OpenAI&logoColor=white)](https://groq.com/)
+[![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2023.0-6DB33F?style=for-the-badge&logo=spring&logoColor=white)](https://spring.io/projects/spring-cloud)
+[![Eureka](https://img.shields.io/badge/Discovery-Eureka%20Registry-E50914?style=for-the-badge&logo=netflix&logoColor=white)](https://spring.io/projects/spring-cloud-netflix)
+[![API Gateway](https://img.shields.io/badge/Gateway-Spring%20Cloud%20Gateway-6DB33F?style=for-the-badge&logo=spring&logoColor=white)](https://spring.io/projects/spring-cloud-gateway)
+[![Resilience4j](https://img.shields.io/badge/Circuit%20Breaker-Resilience4j-FF6F00?style=for-the-badge&logoColor=white)](https://resilience4j.readme.io/)
 
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](#)
 [![Build](https://img.shields.io/badge/Build-Passing-brightgreen.svg?style=flat-square)](#)
@@ -54,6 +57,11 @@ I've recorded short walkthroughs breaking down some of the trickier features and
 
 | Feature                                     | Details                                                                                                                                                                                                                |
 | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🏢 **Microservices Architecture (Spring Cloud)** | Extensible multi-module microservice architecture with Netflix Eureka Service Registry, Spring Cloud Gateway, and decoupled business domains                                                            |
+| ⚖️ **Client-Side Load Balancing**            | Spring Cloud LoadBalancer integrated into API Gateway and OpenFeign clients distributing traffic across multi-replica service instances using Round-Robin                                                               |
+| 🔗 **Declarative Inter-Service RPC (OpenFeign)** | OpenFeign declarative REST clients for inter-service communication with automated service discovery resolution via Eureka (no hardcoded IPs)                                                                          |
+| 🛡️ **Fault Tolerance (Resilience4j Circuit Breaker)** | Circuit Breakers with automated state transitions (CLOSED ➔ OPEN ➔ HALF-OPEN) and graceful fallback mechanisms preventing cascading system failures                                                                   |
+| 🗄️ **Database-per-Service Pattern**         | Decoupled database schemas between User and Appointment services; eliminates cross-service JPA joins, replacing foreign keys with explicit IDs and runtime Feign data stitching                                       |
 | 🔐 **JWT Auth + Role-Based Access**          | Stateless authentication with role-scoped endpoints (ADMIN / DOCTOR / PATIENT)                                                                                                                                         |
 | 🚪 **Redis-Backed Token Revocation**         | True server-side logout for stateless JWTs — a blacklisted token is rejected at the filter level even before its natural expiry, with the Redis key TTL matching the token's remaining lifetime exactly               |
 | ⚡ **Redis-Backed OTP Store**                 | Email verification OTPs live in Redis with native key expiry (`SETEX`) instead of a manually-expired MySQL table — no cleanup job, no stale rows                                                                       |
@@ -121,6 +129,72 @@ com.ankit.HealthCare_Backend/
 ├── prescription/         # Doctor prescriptions, paginated patient-facing query
 └── usermanagement/       # Admin, Doctor, Patient, User, Profile sub-modules — paginated list endpoints in Admin/Doctor/Patient controllers
 ```
+
+---
+
+## 🏢 Microservices Architecture Evolution (Spring Cloud)
+
+To elevate this project from a modular monolith to a distributed, production-grade cloud architecture, the backend features a dedicated **Spring Cloud Microservices Suite** located in [`/Healthcare-Microservices`](./Healthcare-Microservices).
+
+### 📐 Distributed Architecture Flow
+
+```
+                               ┌─────────────────────────┐
+                               │ React Frontend (Client) │
+                               │   http://localhost:5173 │
+                               └────────────┬────────────┘
+                                            │
+                                            ▼ (HTTP Requests)
+                               ┌─────────────────────────┐
+                               │    SPRING CLOUD GATEWAY │
+                               │         (Port: 8080)    │
+                               └────────────┬────────────┘
+                                            │
+               ┌────────────────────────────┼────────────────────────────┐
+               │ lb://USER-SERVICE          │ lb://APPOINTMENT-SERVICE   │
+               ▼                            ▼                            ▼
+      ┌─────────────────┐          ┌─────────────────┐          ┌─────────────────┐
+      │   USER SERVICE  │          │   APPT SERVICE  │          │   APPT SERVICE  │
+      │   (Port: 8081)  │          │  Instance 1:8082│          │  Instance 2:8085│
+      └────────┬────────┘          └────────┬────────┘          └────────┬────────┘
+               │                            │                            │
+               │                            │ ◄── OpenFeign (REST Call) ─┘
+               │                            │     (with Resilience4j)
+               ▼                            ▼                            ▼
+      ┌───────────────────────────────────────────────────────────────────────────┐
+      │                       NETFLIX EUREKA SERVER                               │
+      │                       Service Registry (Port: 8761)                       │
+      └───────────────────────────────────────────────────────────────────────────┘
+```
+
+### 🧩 Microservice Components Breakdown
+
+| Service Module | Port | Core Responsibilities | Key Technologies |
+|---|---|---|---|
+| **[`eureka-server`](./Healthcare-Microservices/eureka-server)** | `8761` | Dynamic service registration, heartbeat health tracking (30s intervals), self-preservation | Netflix Eureka Server, Spring Cloud Netflix |
+| **[`api-gateway`](./Healthcare-Microservices/api-gateway)** | `8080` | Reverse proxy, dynamic path routing via `lb://`, global CORS handling for React, client-side load balancing | Spring Cloud Gateway, WebFlux (Netty), Spring Cloud LoadBalancer |
+| **[`user-service`](./Healthcare-Microservices/user-service)** | `8081` | User registration, BCrypt password hashing, stateless JWT issuance, Patient/Doctor profile management | Spring Security, JJWT, Spring Data JPA, MySQL |
+| **[`appointment-service`](./Healthcare-Microservices/appointment-service)** | `8082` | Appointment scheduling, slot reservation, inter-service data enrichment, circuit breaking | Spring Cloud OpenFeign, Resilience4j, Spring Data JPA, MySQL |
+
+### ⚖️ Client-Side Load Balancing in Action
+Instead of relying on an external hardware load balancer, **Spring Cloud LoadBalancer** operates inside the API Gateway and OpenFeign clients:
+1. When multiple replicas of `appointment-service` run (e.g. `Port 8082` and `Port 8085`), both register under `APPOINTMENT-SERVICE` in Eureka.
+2. The Gateway intercepts client requests and executes **Round-Robin** routing across all healthy replicas:
+   - Request 1 ➔ `Instance 1 (Port 8082)`
+   - Request 2 ➔ `Instance 2 (Port 8085)`
+   - Request 3 ➔ `Instance 1 (Port 8082)`
+3. **Live Verification:** Repeatedly calling `GET http://localhost:8080/api/appointments/instance-info` demonstrates alternating `runningOnPort` values in real-time.
+
+### 🛡️ Fault Tolerance & Circuit Breaking (Resilience4j)
+To prevent **cascading service failures**:
+- When `appointment-service` fetches patient or doctor records from `user-service`, it invokes declarative **OpenFeign** clients wrapped with **Resilience4j Circuit Breakers**.
+- If `user-service` becomes unresponsive or encounters latency exceeding thresholds, the circuit transitions from **CLOSED** to **OPEN**, immediately invoking `UserClientFallback` to return safe fallback values without exhausting worker threads.
+
+### 🗄️ Database-per-Service Decoupling
+- Replaced monolithic cross-boundary JPA relationships (`@ManyToOne Patient`, `@ManyToOne Doctor`) with discrete numeric foreign keys (`patientId`, `doctorId`).
+- Eliminates database coupling and enables independent database scaling and deployment for each bounded context.
+
+> 📘 **Full Architecture & Interview Guide:** For detailed line-by-line code breakdowns, interview pitches, and top microservices Q&A, refer to [`MICROSERVICES_ARCHITECTURE_GUIDE.md`](./Healthcare-Microservices/MICROSERVICES_ARCHITECTURE_GUIDE.md).
 
 ---
 
