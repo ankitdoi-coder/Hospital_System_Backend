@@ -1,0 +1,73 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      # Enable service discovery locator (automatically discovers routes if needed)
+      discovery:
+        locator:
+          enabled: false # We use explicit routes below for clean URL mapping and load balancing
+      
+      # Explicit routes with Load Balancing (lb://<SERVICE_NAME_IN_EUREKA>)
+      routes:
+        # Route 1: Auth and User Management Service
+        - id: user-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/auth/**, /api/users/**, /api/patients/**, /api/doctors/**, /api/admin/**
+
+        # Route 2: Appointment Booking & Scheduling Service
+        - id: appointment-service
+          uri: lb://APPOINTMENT-SERVICE
+          predicates:
+            - Path=/api/appointments/**, /api/slots/**
+
+        # Route 3: Prescription & Medical Records Service
+        - id: prescription-service
+          uri: lb://PRESCRIPTION-SERVICE
+          predicates:
+            - Path=/api/prescriptions/**
+
+        # Route 4: Payment & Billing Service
+        - id: payment-service
+          uri: lb://PAYMENT-SERVICE
+          predicates:
+            - Path=/api/payments/**, /api/billing/**
+
+      # Global CORS configuration for React frontend
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:5173"
+              - "http://localhost:3000"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+              - PATCH
+            allowedHeaders: "*"
+            allowCredentials: true
+
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, gateway
+  endpoint:
+    gateway:
+      enabled: true

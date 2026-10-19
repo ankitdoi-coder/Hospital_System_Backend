@@ -1,0 +1,28 @@
+server:
+  port: 8761
+
+spring:
+  application:
+    name: eureka-server
+
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    # Eureka server should NOT register itself as a client
+    register-with-eureka: false
+    # Eureka server should NOT try to fetch registry from another eureka server (standalone mode)
+    fetch-registry: false
+    service-url:
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+  server:
+    # Disable wait time for test environment so instances show up immediately
+    wait-time-in-ms-when-sync-empty: 0
+    # Enable self-preservation in production, but in local dev we can monitor heartbeats clearly
+    enable-self-preservation: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
