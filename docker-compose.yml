@@ -1,15 +1,17 @@
 version: '3.8'
 
 services:
-  # MySQL Database Service
+  # ==========================================
+  # Infrastructure: MySQL 8.0 Database
+  # ==========================================
   mysql-db:
     image: mysql:8.0
-    container_name: hospital_db
+    container_name: healthcare_mysql
     environment:
-      MYSQL_DATABASE: hospital_db
+      MYSQL_DATABASE: healthcaredb
       MYSQL_ROOT_PASSWORD: secretpassword
     ports:
-      - "3307:3306"
+      - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
@@ -17,12 +19,16 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 90s
+      start_period: 30s
+    networks:
+      - healthcare-network
 
-  # Redis Service (OTP store + JWT blacklist)
+  # ==========================================
+  # Infrastructure: Redis In-Memory Cache
+  # ==========================================
   redis-cache:
     image: redis:7-alpine
-    container_name: hospital_redis
+    container_name: healthcare_redis
     ports:
       - "6379:6379"
     volumes:
@@ -33,30 +39,103 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    networks:
+      - healthcare-network
 
-  # Backend Service
-  hospital-backend:
+  # ==========================================
+  # Core: Eureka Service Discovery Registry
+  # ==========================================
+  eureka-server:
     build:
-      context: .
+      context: ./eureka-server
       dockerfile: Dockerfile
-    container_name: hospital_backend_app
+    container_name: healthcare_eureka
     ports:
-      - "8080:8080"
-    env_file:           
-      - .env  
+      - "8761:8761"
     environment:
-      # Notice we use the service name "mysql-db" here instead of localhost
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/hospital_db?allowPublicKeyRetrieval=true&useSSL=false
+      SERVER_PORT: 8761
+      EUREKA_CLIENT_REGISTER_WITH_EUREKA: "false"
+      EUREKA_CLIENT_FETCH_REGISTRY: "false"
+    networks:
+      - healthcare-network
+
+  # ==========================================
+  # Microservice: User & Identity Service
+  # ==========================================
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: healthcare_user_service
+    ports:
+      - "8081:8081"
+    environment:
+      SERVER_PORT: 8081
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/healthcaredb?allowPublicKeyRetrieval=true&useSSL=false&createDatabaseIfNotExist=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: secretpassword
-      # Notice we use the service name "redis-cache" here instead of localhost
-      REDIS_HOST: redis-cache
-      REDIS_PORT: 6379
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      JWT_SECRET: ${JWT_SECRET:-Y2hhaW5lZGRldmVsb3BlcjEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MA==}
     depends_on:
       mysql-db:
         condition: service_healthy
-      redis-cache:
+      eureka-server:
+        condition: service_started
+    networks:
+      - healthcare-network
+
+  # ==========================================
+  # Microservice: Appointment Service
+  # ==========================================
+  appointment-service:
+    build:
+      context: ./appointment-service
+      dockerfile: Dockerfile
+    container_name: healthcare_appointment_service
+    ports:
+      - "8082:8082"
+    environment:
+      SERVER_PORT: 8082
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/healthcaredb?allowPublicKeyRetrieval=true&useSSL=false&createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: secretpassword
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      mysql-db:
         condition: service_healthy
+      eureka-server:
+        condition: service_started
+      user-service:
+        condition: service_started
+    networks:
+      - healthcare-network
+
+  # ==========================================
+  # Ingress: Spring Cloud API Gateway
+  # ==========================================
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: healthcare_api_gateway
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_PORT: 8080
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      eureka-server:
+        condition: service_started
+      user-service:
+        condition: service_started
+      appointment-service:
+        condition: service_started
+    networks:
+      - healthcare-network
+
+networks:
+  healthcare-network:
+    driver: bridge
 
 volumes:
   mysql_data:

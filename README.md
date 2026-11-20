@@ -97,44 +97,55 @@ To maintain professional-grade data traceability, the system implements **JPA Au
 
 ---
 
-## 🏛️ Architecture
+## 🏛️ Repository Architecture & Layout
 
-![Architecture Diagram](https://raw.githubusercontent.com/ankitdoi-coder/HealthCare-Backend/main/Requirements%20&%20Architecture/06_Architecture_workflow.png)
-
-Classic **3-tier layered architecture**, with Redis sitting alongside MySQL as a second, purpose-built data store for short-lived state, and an outbound integration layer for the third-party Groq LLM API:
+The project is structured as an enterprise **multi-module Maven monorepo** implementing a distributed **Spring Cloud Microservices Architecture**, with the previous monolithic system archived under `legacy-monolith/` for migration reference.
 
 ```
-Controller (REST API)  →  Service (Business Logic)  →  Repository (JPA / MySQL)
-                                    │
-                                    ├──▶  RedisTemplate  →  Redis  (OTPs, JWT blacklist)
-                                    │
-                                    └──▶  RestTemplate   →  Groq LLM API  (Chatbot replies)
-```
-
-The entire stack — application, MySQL, and Redis — runs containerized via Docker Compose on a shared internal network (see [🐳 Containerization](#-containerization-docker) below).
-
-The codebase is organized by **domain modules** (feature-based packaging), not by layer — keeping related code co-located and the project scalable.
-
-```
-com.ankit.HealthCare_Backend/
-├── appointment/          # Appointment booking, status updates, paginated repository queries
-├── authentication/       # JWT + Redis blacklist, Redis-backed OTP, OAuth2, Security config
-├── billing/              # Billing records, payment, revenue stats, Razorpay integration, paginated billing list
-├── chatBot/              # AI Health Assistant — controller, service, DTOs; Groq LLM integration
-├── communication/        # Contact Us feature
-├── core/                 # Shared enums (AppointmentStatus, BillingStatus), Role entity, RedisConfig
-├── Exception/            # GlobalExceptionHandler + custom exceptions (incl. ChatbotServiceException)
-├── filemanagement/       # Profile picture upload/retrieval, Cloudinary integration
-├── Notification/         # Notification entity & repository
-├── prescription/         # Doctor prescriptions, paginated patient-facing query
-└── usermanagement/       # Admin, Doctor, Patient, User, Profile sub-modules — paginated list endpoints in Admin/Doctor/Patient controllers
+HealthCare-Backend/
+├── pom.xml                               # Root Multi-Module Maven Aggregator POM
+├── mvnw / mvnw.cmd / .mvn/               # Unified Maven Wrapper for all services
+├── docker-compose.yml                    # Microservices orchestration (MySQL, Redis, Eureka, Gateway, Services)
+├── start-microservices.ps1               # Automated Staggered Microservices Startup Script
+│
+├── eureka-server/                        # [Service 1] Netflix Eureka Service Registry (Port: 8761)
+│   ├── pom.xml
+│   ├── Dockerfile
+│   └── src/
+│
+├── api-gateway/                          # [Service 2] Spring Cloud Gateway + LoadBalancer (Port: 8080)
+│   ├── pom.xml
+│   ├── Dockerfile
+│   └── src/
+│
+├── user-service/                         # [Service 3] Identity, Auth & Profile Service (Port: 8081)
+│   ├── pom.xml
+│   ├── Dockerfile
+│   └── src/
+│
+├── appointment-service/                  # [Service 4] Appointment Scheduling & OpenFeign Client (Port: 8082)
+│   ├── pom.xml
+│   ├── Dockerfile
+│   └── src/
+│
+├── legacy-monolith/                      # [Archived Monolith] Original Spring Boot 3.5 Monolithic Codebase
+│   ├── pom.xml
+│   ├── Dockerfile
+│   ├── docker-compose.yml
+│   └── src/                              # Features: Groq Chatbot, Razorpay, Cloudinary, Prescriptions
+│
+└── docs/                                 # Architecture guides, ERDs, and deployment documentation
+    ├── MICROSERVICES_ARCHITECTURE_GUIDE.md
+    ├── DEPLOYMENT.md
+    ├── CONFIGURATION.md
+    └── requirements-architecture/
 ```
 
 ---
 
 ## 🏢 Microservices Architecture Evolution (Spring Cloud)
 
-To elevate this project from a modular monolith to a distributed, production-grade cloud architecture, the backend features a dedicated **Spring Cloud Microservices Suite** located in [`/Healthcare-Microservices`](./Healthcare-Microservices).
+To elevate this project from a modular monolith to a distributed, production-grade cloud architecture, the backend features a dedicated **Spring Cloud Microservices Suite** structured as top-level Maven modules.
 
 ### 📐 Distributed Architecture Flow
 
@@ -171,10 +182,10 @@ To elevate this project from a modular monolith to a distributed, production-gra
 
 | Service Module | Port | Core Responsibilities | Key Technologies |
 |---|---|---|---|
-| **[`eureka-server`](./Healthcare-Microservices/eureka-server)** | `8761` | Dynamic service registration, heartbeat health tracking (30s intervals), self-preservation | Netflix Eureka Server, Spring Cloud Netflix |
-| **[`api-gateway`](./Healthcare-Microservices/api-gateway)** | `8080` | Reverse proxy, dynamic path routing via `lb://`, global CORS handling for React, client-side load balancing | Spring Cloud Gateway, WebFlux (Netty), Spring Cloud LoadBalancer |
-| **[`user-service`](./Healthcare-Microservices/user-service)** | `8081` | User registration, BCrypt password hashing, stateless JWT issuance, Patient/Doctor profile management | Spring Security, JJWT, Spring Data JPA, MySQL |
-| **[`appointment-service`](./Healthcare-Microservices/appointment-service)** | `8082` | Appointment scheduling, slot reservation, inter-service data enrichment, circuit breaking | Spring Cloud OpenFeign, Resilience4j, Spring Data JPA, MySQL |
+| **[`eureka-server`](./eureka-server)** | `8761` | Dynamic service registration, heartbeat health tracking (30s intervals), self-preservation | Netflix Eureka Server, Spring Cloud Netflix |
+| **[`api-gateway`](./api-gateway)** | `8080` | Reverse proxy, dynamic path routing via `lb://`, global CORS handling for React, client-side load balancing | Spring Cloud Gateway, WebFlux (Netty), Spring Cloud LoadBalancer |
+| **[`user-service`](./user-service)** | `8081` | User registration, BCrypt password hashing, stateless JWT issuance, Patient/Doctor profile management | Spring Security, JJWT, Spring Data JPA, MySQL |
+| **[`appointment-service`](./appointment-service)** | `8082` | Appointment scheduling, slot reservation, inter-service data enrichment, circuit breaking | Spring Cloud OpenFeign, Resilience4j, Spring Data JPA, MySQL |
 
 ### ⚖️ Client-Side Load Balancing in Action
 Instead of relying on an external hardware load balancer, **Spring Cloud LoadBalancer** operates inside the API Gateway and OpenFeign clients:
@@ -194,7 +205,7 @@ To prevent **cascading service failures**:
 - Replaced monolithic cross-boundary JPA relationships (`@ManyToOne Patient`, `@ManyToOne Doctor`) with discrete numeric foreign keys (`patientId`, `doctorId`).
 - Eliminates database coupling and enables independent database scaling and deployment for each bounded context.
 
-> 📘 **Full Architecture & Interview Guide:** For detailed line-by-line code breakdowns, interview pitches, and top microservices Q&A, refer to [`MICROSERVICES_ARCHITECTURE_GUIDE.md`](./Healthcare-Microservices/MICROSERVICES_ARCHITECTURE_GUIDE.md).
+> 📘 **Full Architecture & Interview Guide:** For detailed line-by-line code breakdowns, interview pitches, and top microservices Q&A, refer to [`MICROSERVICES_ARCHITECTURE_GUIDE.md`](./docs/MICROSERVICES_ARCHITECTURE_GUIDE.md).
 
 ---
 
