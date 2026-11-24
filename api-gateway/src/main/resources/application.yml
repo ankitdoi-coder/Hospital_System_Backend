@@ -1,41 +1,71 @@
 server:
   port: 8080
 
+app:
+  jwt:
+    secret: ${JWT_SECRET:Y2hhaW5lZGRldmVsb3BlcjEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MA==}
+
 spring:
   application:
     name: api-gateway
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.reactive.ReactiveUserDetailsServiceAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.reactive.ReactiveSecurityAutoConfiguration
   cloud:
     gateway:
-      # Enable service discovery locator (automatically discovers routes if needed)
       discovery:
         locator:
-          enabled: false # We use explicit routes below for clean URL mapping and load balancing
-      
-      # Explicit routes with Load Balancing (lb://<SERVICE_NAME_IN_EUREKA>)
+          enabled: false
       routes:
-        # Route 1: Auth and User Management Service
-        - id: user-service
+        # Route 1: Auth endpoints — PUBLIC (no JWT filter)
+        - id: user-service-auth
           uri: lb://USER-SERVICE
           predicates:
-            - Path=/api/auth/**, /api/users/**, /api/patients/**, /api/doctors/**, /api/admin/**
+            - Path=/api/auth/**
 
-        # Route 2: Appointment Booking & Scheduling Service
+        # Route 2: Protected user/patient/doctor/admin endpoints — JWT required
+        - id: user-service-protected
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/users/**, /api/patients/**, /api/doctors/**, /api/admin/**
+          filters:
+            - JwtAuthFilter
+
+        # Route 3: Appointment Service — JWT required
         - id: appointment-service
           uri: lb://APPOINTMENT-SERVICE
           predicates:
             - Path=/api/appointments/**, /api/slots/**
+          filters:
+            - JwtAuthFilter
 
-        # Route 3: Prescription & Medical Records Service
+        # Route 4: Prescription Service — JWT required
         - id: prescription-service
           uri: lb://PRESCRIPTION-SERVICE
           predicates:
             - Path=/api/prescriptions/**
+          filters:
+            - JwtAuthFilter
 
-        # Route 4: Payment & Billing Service
+        # Route 5: Payment Service — JWT required
         - id: payment-service
           uri: lb://PAYMENT-SERVICE
           predicates:
             - Path=/api/payments/**, /api/billing/**
+          filters:
+            - JwtAuthFilter
+
+        # Route 6: GenAI Service — PUBLIC (AI symptom checker, no auth needed)
+        - id: genai-service
+          uri: http://genai-service:8090
+          predicates:
+            - Path=/api/ai/**
+          filters:
+            - StripPrefix=1
+
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST
 
       # Global CORS configuration for React frontend
       globalcors:

@@ -1,9 +1,8 @@
 package com.healthcare.user.controller;
 
-import com.healthcare.user.dto.AuthResponseDTO;
-import com.healthcare.user.dto.LoginRequestDTO;
-import com.healthcare.user.dto.RegisterRequestDTO;
+import com.healthcare.user.dto.*;
 import com.healthcare.user.service.AuthService;
+import com.healthcare.user.service.EmailOtpService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,6 +15,22 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final EmailOtpService emailOtpService;
+
+    @PostMapping("/send-otp")
+    public ResponseEntity<MessageResponseDTO> sendOtp(@Valid @RequestBody OtpRequestDTO request) {
+        emailOtpService.sendOtp(request.getEmail());
+        return ResponseEntity.ok(new MessageResponseDTO("OTP sent to " + request.getEmail()));
+    }
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<MessageResponseDTO> verifyOtp(@Valid @RequestBody OtpVerifyDTO request) {
+        boolean verified = emailOtpService.verifyOtp(request.getEmail(), request.getOtp());
+        if (!verified) {
+            return ResponseEntity.badRequest().body(new MessageResponseDTO("Invalid or expired OTP"));
+        }
+        return ResponseEntity.ok(new MessageResponseDTO("Email verified. You can now register."));
+    }
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponseDTO> register(@Valid @RequestBody RegisterRequestDTO request) {

@@ -23,19 +23,60 @@ public class RegisterRequestDTO {
     @Size(min = 6, message = "Password must be at least 6 characters")
     private String password;
 
-    @NotBlank(message = "Full name is required")
     private String fullName;
+    private String firstName;
+    private String lastName;
 
     private String phone;
+    private String contactNumber;
 
     private Role role; // ROLE_PATIENT or ROLE_DOCTOR
+    private Integer roleId; // 1 = Patient, 2 = Doctor
 
     // Extra details if Doctor
     private String specialization;
+    private String specialty;
     private String department;
     private Double consultationFee;
+    private Integer experience;
 
     // Extra details if Patient
     private String bloodGroup;
     private String gender;
+    private String dob;
+
+    public String getFullName() {
+        if (fullName != null && !fullName.isBlank()) {
+            return fullName;
+        }
+        if (firstName != null || lastName != null) {
+            String combined = ((firstName != null ? firstName : "") + " " + (lastName != null ? lastName : "")).trim();
+            if (!combined.isEmpty()) return combined;
+        }
+        return "User";
+    }
+
+    public String getPhone() {
+        if (phone != null && !phone.isBlank()) {
+            return phone;
+        }
+        return contactNumber;
+    }
+
+    public Role getRole() {
+        if (role != null) {
+            return role;
+        }
+        if (roleId != null) {
+            return roleId == 2 ? Role.ROLE_DOCTOR : Role.ROLE_PATIENT;
+        }
+        return Role.ROLE_PATIENT;
+    }
+
+    public String getSpecialization() {
+        if (specialization != null && !specialization.isBlank()) {
+            return specialization;
+        }
+        return specialty;
+    }
 }

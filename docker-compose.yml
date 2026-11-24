@@ -133,6 +133,21 @@ services:
     networks:
       - healthcare-network
 
+  # ==========================================
+  # Microservice: GenAI Service (FastAPI)
+  # ==========================================
+  genai-service:
+    build:
+      context: ./genai-service
+      dockerfile: Dockerfile
+    container_name: healthcare_genai_service
+    ports:
+      - "8090:8090"
+    environment:
+      GROQ_API_KEY: ${GROQ_API_KEY}
+    networks:
+      - healthcare-network
+
 networks:
   healthcare-network:
     driver: bridge

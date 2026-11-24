@@ -84,6 +84,12 @@
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
 
+        <!-- Redis for OTP storage -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
         <!-- Actuator for Health Check -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
