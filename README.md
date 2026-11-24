@@ -22,6 +22,10 @@ Implements real-world engineering practices including JWT-based auth with Redis-
 [![Eureka](https://img.shields.io/badge/Discovery-Eureka%20Registry-E50914?style=for-the-badge&logo=netflix&logoColor=white)](https://spring.io/projects/spring-cloud-netflix)
 [![API Gateway](https://img.shields.io/badge/Gateway-Spring%20Cloud%20Gateway-6DB33F?style=for-the-badge&logo=spring&logoColor=white)](https://spring.io/projects/spring-cloud-gateway)
 [![Resilience4j](https://img.shields.io/badge/Circuit%20Breaker-Resilience4j-FF6F00?style=for-the-badge&logoColor=white)](https://resilience4j.readme.io/)
+[![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![LangChain](https://img.shields.io/badge/LangChain-0.3-1C3C3C?style=for-the-badge&logo=langchain&logoColor=white)](https://www.langchain.com/)
+[![Groq](https://img.shields.io/badge/LLM-Groq%20%2B%20LLaMA%203.1-F55036?style=for-the-badge&logo=OpenAI&logoColor=white)](https://groq.com/)
 
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](#)
 [![Build](https://img.shields.io/badge/Build-Passing-brightgreen.svg?style=flat-square)](#)
@@ -49,7 +53,7 @@ I've recorded short walkthroughs breaking down some of the trickier features and
 | 6   | 📧 OTP-Based Registration Flow                          | [▶ Watch](https://youtu.be/8FZdOrmtN2A?si=ZC2RkhXvxhLi4Wuo) |
 | 7   | 🔑 OTP Email-Based Password Reset                       | [▶ Watch](https://youtu.be/1MH0xzRQ0OM?si=_MpSCJ_vM0tZSQea) |
 
-> 💡 These videos are meant to give reviewers a look into my thought process — how I debug, design, and reason through real backend problems, not just the final code.
+> 💡 These aren't tutorial walkthroughs — they're a window into how I actually think. I recorded these to show the reasoning behind the implementation: why I designed it this way, how I debugged it when it broke, and what tradeoffs I considered. If you want to know how I'll perform in a code review, a system design discussion, or a production incident — this is the closest thing to that without putting me in the room.
 
 ---
 
@@ -71,6 +75,8 @@ I've recorded short walkthroughs breaking down some of the trickier features and
 | ☁️ **Cloudinary Cloud Media Storage**        | Profile pictures uploaded via multipart requests are validated, streamed, and persisted to Cloudinary — no local disk dependency, fully production-portable                                                            |
 | 📄 **Server-Side Pagination**                | Every major list endpoint (Admin's Doctors/Patients/Billing, Doctor's Appointments/Patients, Patient's Doctors/Appointments/Prescriptions) accepts `page`/`size` query params and returns a Spring Data `Page<T>` instead of a full unbounded list |
 | 🤖 **AI Health Assistant (Chatbot)**         | Patient-facing LLM-powered chatbot (Groq API) with a locked-down system prompt — general wellness info and platform guidance only, never diagnosis or prescriptions, with graceful `503` fallback on provider outages |
+| 🧬 **GenAI Microservice (Python + FastAPI)**  | Standalone AI microservice built with **Python, FastAPI, and LangChain** — exposes an AI-powered symptom checker that analyzes patient symptoms, age, gender, and duration via a structured LLM chain (Groq + LLaMA 3.1), returning ranked possible conditions with urgency levels and specialist recommendations |
+| 🚪 **Single Authentication & Authorization (API Gateway)** | All services — including the GenAI Python microservice — sit behind the **Spring Cloud Gateway**. JWT validation via `JwtAuthFilter` runs at the gateway level, so no individual service re-implements auth. Protected routes require a valid Bearer token; the gateway injects `X-User-Email`, `X-User-Role`, and `X-User-Id` headers into every forwarded request |
 | 🐳 **Full Docker Containerization**          | Multi-stage `Dockerfile` + `docker-compose.yml` orchestrating the app, MySQL, and Redis together with health-checked startup ordering and persistent volumes                                                          |
 | 🛡️ **Global Exception Handler**              | `@RestControllerAdvice` catches all exceptions — validation, auth, not-found, duplicates, chatbot provider errors — and returns consistent JSON error responses with timestamp                                        |
 | ✅ **Bean Validation**                       | `@Valid` + Jakarta Validation annotations (`@NotNull`, `@NotBlank`, `@Email`, `@Digits`) on all request DTOs                                                                                                           |
@@ -128,6 +134,15 @@ HealthCare-Backend/
 │   ├── Dockerfile
 │   └── src/
 │
+├── genai-service/                        # [Service 5] GenAI Microservice — Python + FastAPI + LangChain (Port: 8090)
+│   ├── app/
+│   │   ├── models/schemas.py             # Pydantic request/response models
+│   │   ├── routers/symptom.py            # POST /ai/symptom-check endpoint
+│   │   ├── services/llm_service.py       # LangChain chain: ChatGroq + ChatPromptTemplate
+│   │   └── main.py                       # FastAPI app, CORS, lifespan, router registration
+│   ├── requirements.txt                  # fastapi, uvicorn, langchain, langchain-groq, pydantic
+│   └── Dockerfile
+│
 ├── legacy-monolith/                      # [Archived Monolith] Original Spring Boot 3.5 Monolithic Codebase
 │   ├── pom.xml
 │   ├── Dockerfile
@@ -183,9 +198,10 @@ To elevate this project from a modular monolith to a distributed, production-gra
 | Service Module | Port | Core Responsibilities | Key Technologies |
 |---|---|---|---|
 | **[`eureka-server`](./eureka-server)** | `8761` | Dynamic service registration, heartbeat health tracking (30s intervals), self-preservation | Netflix Eureka Server, Spring Cloud Netflix |
-| **[`api-gateway`](./api-gateway)** | `8080` | Reverse proxy, dynamic path routing via `lb://`, global CORS handling for React, client-side load balancing | Spring Cloud Gateway, WebFlux (Netty), Spring Cloud LoadBalancer |
+| **[`api-gateway`](./api-gateway)** | `8080` | Reverse proxy, dynamic path routing via `lb://`, global CORS handling for React, client-side load balancing, **single JWT auth/authz layer for all services** | Spring Cloud Gateway, WebFlux (Netty), Spring Cloud LoadBalancer, JJWT |
 | **[`user-service`](./user-service)** | `8081` | User registration, BCrypt password hashing, stateless JWT issuance, Patient/Doctor profile management | Spring Security, JJWT, Spring Data JPA, MySQL |
 | **[`appointment-service`](./appointment-service)** | `8082` | Appointment scheduling, slot reservation, inter-service data enrichment, circuit breaking | Spring Cloud OpenFeign, Resilience4j, Spring Data JPA, MySQL |
+| **[`genai-service`](./genai-service)** | `8090` | AI-powered symptom analysis — accepts patient symptoms, age, gender, duration; returns ranked conditions with urgency levels and specialist recommendations via a structured LangChain LLM chain | **Python 3.11, FastAPI, LangChain, LangChain-Groq, Pydantic v2, Uvicorn** |
 
 ### ⚖️ Client-Side Load Balancing in Action
 Instead of relying on an external hardware load balancer, **Spring Cloud LoadBalancer** operates inside the API Gateway and OpenFeign clients:
@@ -209,7 +225,180 @@ To prevent **cascading service failures**:
 
 ---
 
-## 🚀 Technology Stack
+## 🧠 GenAI Microservice — Python + FastAPI + LangChain
+
+The system includes a dedicated **GenAI microservice** built entirely in **Python** — a deliberate polyglot architecture decision. The Java Spring Boot services handle identity, scheduling, and payments; the Python service owns the AI/ML workload where Python's ecosystem (LangChain, Groq SDK) is the natural fit.
+
+### 🛠️ Tech Stack (GenAI Service)
+
+| Layer | Technology | Version |
+|---|---|---|
+| Web Framework | **FastAPI** | 0.115.0 |
+| ASGI Server | **Uvicorn** (with standard extras) | 0.30.6 |
+| LLM Orchestration | **LangChain** | 0.3.0 |
+| LLM Provider Client | **LangChain-Groq** | 0.2.0 |
+| LLM Model | **LLaMA 3.1 8B Instant** (via Groq) | — |
+| Data Validation | **Pydantic v2** | 2.9.2 |
+| Config Management | **python-dotenv** | 1.0.1 |
+| Language | **Python** | 3.11 |
+
+### 📌 What's Implemented
+
+| Capability | Status |
+|---|---|
+| `POST /ai/symptom-check` — AI symptom analysis endpoint | ✅ Implemented |
+| Pydantic v2 request validation (`symptoms`, `age`, `gender`, `duration_days`) | ✅ Implemented |
+| LangChain `ChatPromptTemplate` with structured JSON output contract | ✅ Implemented |
+| `ChatGroq` LLM client (LLaMA 3.1 8B Instant, `temperature=0.3`) | ✅ Implemented |
+| Returns 3 ranked possible conditions with `urgency` (Low/Medium/High) | ✅ Implemented |
+| `recommended_specialist` field per condition | ✅ Implemented |
+| `general_advice` + medical `disclaimer` in every response | ✅ Implemented |
+| `json.JSONDecodeError` → `502 Bad Gateway` (malformed LLM output) | ✅ Implemented |
+| FastAPI lifespan startup check for missing `GROQ_API_KEY` | ✅ Implemented |
+| `/health` endpoint for Docker health checks | ✅ Implemented |
+| CORS configured for React frontend and API Gateway | ✅ Implemented |
+
+### 🧠 LangChain Chain Architecture
+
+```
+SymptomRequest (Pydantic)
+        │
+        ▼
+ChatPromptTemplate.from_template()
+  (structured JSON output contract baked into the prompt)
+        │
+        ▼
+ChatGroq(model="llama-3.1-8b-instant", temperature=0.3)
+        │
+        ▼
+  result.content  ──▶  json.loads()  ──▶  SymptomResponse (Pydantic)
+```
+
+The prompt is the schema contract — it instructs the LLM to return **only valid JSON** in an exact shape (no markdown, no extra text), which is then parsed directly into a typed `SymptomResponse` Pydantic model. `temperature=0.3` keeps the output deterministic and medically conservative.
+
+### 🧾 Request / Response Shape
+
+**Request** — `POST /api/ai/symptom-check`
+```json
+{
+  "symptoms": ["fever", "headache", "fatigue"],
+  "age": 28,
+  "gender": "Male",
+  "duration_days": 3
+}
+```
+
+**Response**
+```json
+{
+  "patient_profile": "28-year-old male with fever, headache, and fatigue for 3 days",
+  "possible_conditions": [
+    {
+      "condition": "Viral Fever",
+      "urgency": "Medium",
+      "description": "Common viral infection causing fever and body ache.",
+      "recommended_specialist": "General Physician"
+    }
+  ],
+  "general_advice": "Stay hydrated, rest, and monitor temperature.",
+  "disclaimer": "This is AI-generated information and not a substitute for professional medical advice."
+}
+```
+
+### 🗂️ Service Structure
+
+```
+genai-service/
+├── app/
+│   ├── models/schemas.py       # Pydantic models: SymptomRequest, ConditionResult, SymptomResponse
+│   ├── routers/symptom.py      # FastAPI router: POST /ai/symptom-check
+│   ├── services/llm_service.py # LangChain chain: ChatGroq + ChatPromptTemplate + async ainvoke
+│   └── main.py                 # FastAPI app, CORS middleware, lifespan, router registration
+├── requirements.txt
+└── Dockerfile
+```
+
+---
+
+## 🚪 Single Authentication & Authorization — API Gateway
+
+One of the core architectural decisions in this system: **JWT authentication and authorization is enforced once, at the API Gateway level** — no individual microservice (Java or Python) re-implements auth logic.
+
+### 📐 How It Works
+
+```
+Client Request (with Bearer token)
+        │
+        ▼
+┌─────────────────────────────────────────┐
+│         Spring Cloud Gateway (8080)     │
+│                                         │
+│  JwtAuthFilter (GatewayFilter)          │
+│  ┌──────────────────────────────────┐   │
+│  │ 1. Extract Authorization header  │   │
+│  │ 2. Validate JWT signature        │   │
+│  │ 3. Check expiry                  │   │
+│  │ 4. Extract claims (email, role,  │   │
+│  │    userId)                       │   │
+│  │ 5. Mutate request — inject:      │   │
+│  │    X-User-Email                  │   │
+│  │    X-User-Role                   │   │
+│  │    X-User-Id                     │   │
+│  └──────────────────────────────────┘   │
+│         │ valid            │ invalid    │
+│         ▼                  ▼            │
+│   chain.filter()     401 Unauthorized   │
+└─────────────────────────────────────────┘
+        │
+        ▼
+  Downstream Service (user-service / appointment-service / genai-service)
+  reads X-User-Email, X-User-Role, X-User-Id from headers — no JWT re-validation
+```
+
+### 🧩 Route-Level Auth Configuration
+
+```yaml
+routes:
+  # PUBLIC — no JWT filter
+  - id: user-service-auth
+    uri: lb://USER-SERVICE
+    predicates:
+      - Path=/api/auth/**
+
+  # PROTECTED — JWT required
+  - id: user-service-protected
+    uri: lb://USER-SERVICE
+    predicates:
+      - Path=/api/users/**, /api/patients/**, /api/doctors/**, /api/admin/**
+    filters:
+      - JwtAuthFilter
+
+  # PROTECTED — JWT required
+  - id: appointment-service
+    uri: lb://APPOINTMENT-SERVICE
+    predicates:
+      - Path=/api/appointments/**, /api/slots/**
+    filters:
+      - JwtAuthFilter
+
+  # GenAI Service — routed to Python FastAPI (no Eureka, direct HTTP)
+  - id: genai-service
+    uri: http://genai-service:8090
+    predicates:
+      - Path=/api/ai/**
+    filters:
+      - StripPrefix=1
+```
+
+### ✅ What This Means
+
+- `JwtAuthFilter` is an `AbstractGatewayFilterFactory` — it runs as a **per-route GatewayFilter**, applied only to routes that declare it.
+- Auth routes (`/api/auth/**`) are intentionally left without the filter — login and registration must be public.
+- The GenAI service (`/api/ai/**`) is routed directly to the Python FastAPI container via `http://genai-service:8090` (not via Eureka, since FastAPI doesn't register with the Spring Eureka registry). `StripPrefix=1` removes the `/api` prefix before forwarding.
+- Downstream services trust the `X-User-*` headers injected by the gateway — they never see or re-validate the raw JWT.
+- This is the same pattern used in real API gateway architectures: **one auth boundary, many services behind it**.
+
+
 
 <div align="center">
 
@@ -222,6 +411,9 @@ To prevent **cascading service failures**:
 ![Razorpay](https://img.shields.io/badge/Razorpay-Java%20SDK-0C2451?style=flat-square&logo=razorpay&logoColor=white)
 ![Cloudinary](https://img.shields.io/badge/Cloudinary-Java%20SDK-3448C5?style=flat-square&logo=cloudinary&logoColor=white)
 ![Groq](https://img.shields.io/badge/AI-Groq%20LLM%20API-F55036?style=flat-square&logo=OpenAI&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=flat-square&logo=fastapi&logoColor=white)
+![LangChain](https://img.shields.io/badge/LangChain-0.3-1C3C3C?style=flat-square&logo=langchain&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white)
 ![JavaMail](https://img.shields.io/badge/Email-JavaMailSender-D14836?style=flat-square&logo=gmail&logoColor=white)
 ![Hibernate](https://img.shields.io/badge/ORM-JPA%2FHibernate-59666C?style=flat-square&logo=hibernate&logoColor=white)
@@ -243,6 +435,8 @@ To prevent **cascading service failures**:
 | Payment Gateway | Razorpay Java SDK                         | Latest stable  |
 | Media Storage   | Cloudinary Java SDK                       | Latest stable  |
 | AI Chatbot      | Groq LLM API (via `RestTemplate`)         | Latest stable  |
+| GenAI Service   | Python + FastAPI + LangChain + LangChain-Groq | 0.115 / 0.3.0 / 0.2.0 |
+| LLM Model       | LLaMA 3.1 8B Instant (via Groq)           | —              |
 | Containerization| Docker + Docker Compose                   | Multi-stage build |
 | Email           | Spring Boot Starter Mail (JavaMailSender) | 3.5.7          |
 | ORM             | Spring Data JPA + Hibernate               | 3.5.7          |
@@ -869,6 +1063,8 @@ This project was built to demonstrate practical, production-grade backend engine
 - ☁️ **Stateless media handling** — profile pictures stream directly to Cloudinary rather than local disk, keeping the API instance-agnostic and production-portable from day one.
 - 📄 **Query-level pagination, not in-memory slicing** — every list endpoint that can grow unbounded pushes `Pageable` down into the repository layer, so response times stay flat as data volume grows instead of degrading with a full-table fetch.
 - 🤖 **Guardrailed LLM integration, not an open-ended chatbot** — the AI assistant's system prompt is treated as an actual safety boundary (no diagnosis, no dosages, redirect symptoms to real doctors), and provider failures are caught explicitly rather than leaking a raw exception to the client.
+- 🧠 **Polyglot microservice — Python GenAI service alongside Java Spring Boot** — the AI workload lives in a dedicated FastAPI + LangChain service (Python 3.11) rather than being bolted onto a Java service. LangChain's `ChatPromptTemplate | ChatGroq` chain enforces a strict JSON output contract from the LLM, parsed directly into Pydantic v2 models.
+- 🚪 **Single auth boundary across all services (Java + Python)** — JWT validation runs once at the Spring Cloud Gateway via `JwtAuthFilter`. The gateway injects `X-User-Email`, `X-User-Role`, and `X-User-Id` headers into every forwarded request — downstream services (including the Python FastAPI service) trust these headers without re-validating the token.
 - 🐳 **Real containerization, not a token Dockerfile** — a multi-stage build, health-checked service dependencies, persistent volumes, and a first-init race condition actually caught and fixed during local testing rather than glossed over.
 - 🪪 **Stateless, role-scoped JWT auth** with a proper OAuth2 social login path alongside it.
 - 🧩 **Consistent error contracts** across the entire API via a single global exception handler.
